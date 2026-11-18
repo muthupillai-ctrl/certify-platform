@@ -1,0 +1,109 @@
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900">Institution profile</h1>
+  <p class="text-sm text-gray-500 mt-1">Who your institution is, for verifiers and for Certyfi support.</p>
+</div>
+
+@if (profile(); as p) {
+  <app-institution-profile-form
+    [profile]="p"
+    [saving]="profileSaving()"
+    [error]="profileError()"
+    [savedMessage]="profileSaved()"
+    (save)="saveProfile($event)"
+  />
+} @else if (profileError()) {
+  <p class="text-sm text-red-700">{{ profileError() }}</p>
+} @else {
+  <p class="text-sm text-gray-500">Loading...</p>
+}
+
+<div class="mb-6 mt-10">
+  <h1 class="text-xl font-semibold text-gray-900">Institution branding</h1>
+  <p class="text-sm text-gray-500 mt-1">
+    Shown on your institution's public verification pages and printed certificates.
+  </p>
+</div>
+
+@if (loading()) {
+  <p class="text-sm text-gray-500">Loading...</p>
+} @else {
+  <form (ngSubmit)="save()" #f="ngForm" class="bg-white border border-gray-200 rounded-lg p-6 max-w-md">
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+      <input
+        type="text"
+        name="logoUrl"
+        [(ngModel)]="logoUrl"
+        placeholder="https://example.edu/logo.png"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+      @if (logoUrl) {
+        <div class="mt-3 flex items-center gap-3 p-3 border border-gray-100 rounded-md bg-gray-50">
+          <img [src]="logoUrl" alt="Logo preview" class="h-10 object-contain" />
+          <span class="text-xs text-gray-500">Preview</span>
+        </div>
+      }
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Primary color</label>
+      <div class="flex items-center gap-2">
+        <input
+          type="color"
+          [(ngModel)]="primaryColor"
+          [ngModelOptions]="{ standalone: true }"
+          class="w-10 h-10 border border-gray-300 rounded-md cursor-pointer shrink-0"
+        />
+        <input
+          type="text"
+          name="primaryColor"
+          [(ngModel)]="primaryColor"
+          placeholder="#1a2b3c"
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+        />
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="text-sm text-red-600 mb-4">{{ errorMessage() }}</p>
+    }
+    @if (savedMessage()) {
+      <p class="text-sm text-green-700 mb-4">{{ savedMessage() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="saving()"
+      class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    >
+      {{ saving() ? 'Saving...' : 'Save branding' }}
+    </button>
+  </form>
+}
+
+<div class="mb-6 mt-10">
+  <h1 class="text-xl font-semibold text-gray-900">Student payments</h1>
+  <p class="text-sm text-gray-500 mt-1">
+    For certificates requested by a partner app (such as your LMS) whose API key has "Students pay before issue".
+  </p>
+</div>
+
+<form (ngSubmit)="savePayments()" #pf="ngForm" class="bg-white border border-gray-200 rounded-lg p-6 max-w-md">
+  <label for="payment-days" class="block text-sm font-medium text-gray-700 mb-1">Days to pay before an unpaid certificate is cancelled</label>
+  <input id="payment-days" type="number" name="paymentDays" [(ngModel)]="paymentDays" required min="0" max="365" step="1"
+    class="w-32 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+  <p class="mt-2 text-xs text-gray-500">
+    The student is emailed a reminder 3 days before the due date (halfway, for short periods), and is told when it's cancelled.
+    0 means never cancel. Changes apply to certificates requested from now on; ones already waiting keep their due date.
+  </p>
+  @if (paymentError()) {
+    <p class="text-sm text-red-600 mt-3">{{ paymentError() }}</p>
+  }
+  @if (paymentSaved()) {
+    <p class="text-sm text-green-700 mt-3">{{ paymentSaved() }}</p>
+  }
+  <button type="submit" [disabled]="pf.invalid || paymentSaving()"
+    class="mt-4 px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+    {{ paymentSaving() ? 'Saving...' : 'Save' }}
+  </button>
+</form>

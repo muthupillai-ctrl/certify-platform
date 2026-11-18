@@ -1,0 +1,117 @@
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900">My profile</h1>
+  <p class="text-sm text-gray-500 mt-1">Your Certyfi platform account.</p>
+</div>
+
+@if (error()) {
+  <p class="text-sm text-red-700 mb-4" role="alert">{{ error() }}</p>
+}
+
+@if (auth.passwordChangeRequired()) {
+  <div class="mb-6 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900" role="note">
+    You signed in with a temporary password. Choose your own password to continue.
+  </div>
+}
+
+@if (account(); as a) {
+  <div class="grid gap-6 lg:grid-cols-2">
+    @if (!auth.passwordChangeRequired()) {
+      <section class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-sm font-semibold text-gray-900 mb-4">Details</h2>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm mb-5">
+          <dt class="text-gray-500">Email</dt><dd class="text-gray-900 break-all">{{ a.email }}</dd>
+          <dt class="text-gray-500">Account created</dt><dd class="text-gray-900">{{ a.createdAt | date: 'mediumDate' }}</dd>
+          <dt class="text-gray-500">Last sign-in</dt><dd class="text-gray-900">{{ a.lastLoginAt ? (a.lastLoginAt | date: 'medium') : '—' }}</dd>
+          <dt class="text-gray-500">Password changed</dt><dd class="text-gray-900">{{ a.passwordChangedAt ? (a.passwordChangedAt | date: 'medium') : '—' }}</dd>
+        </dl>
+        <form (ngSubmit)="saveName()" #nf="ngForm" class="flex flex-wrap items-end gap-2">
+          <div class="flex-1 min-w-48">
+            <label for="pp-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input id="pp-name" name="name" [(ngModel)]="name" required maxlength="200"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          </div>
+          <button type="submit" [disabled]="nf.invalid || nameBusy() || name.trim() === a.fullName"
+            class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">Save</button>
+        </form>
+        @if (nameNote()) { <p class="mt-2 text-sm text-gray-700" role="status">{{ nameNote() }}</p> }
+      </section>
+    }
+
+    <section class="bg-white border border-gray-200 rounded-lg p-6">
+      <h2 class="text-sm font-semibold text-gray-900 mb-1">Password</h2>
+      <p class="text-xs text-gray-500 mb-4">Changing it signs you out everywhere else and emails you a confirmation.</p>
+      <form (ngSubmit)="changePassword()" #pf="ngForm" class="space-y-3">
+        <div>
+          <label for="pp-current" class="block text-sm font-medium text-gray-700 mb-1">{{ auth.passwordChangeRequired() ? 'Temporary password' : 'Current password' }}</label>
+          <input id="pp-current" name="current" type="password" [(ngModel)]="currentPassword" required autocomplete="current-password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        </div>
+        <div>
+          <label for="pp-new" class="block text-sm font-medium text-gray-700 mb-1">New password</label>
+          <input id="pp-new" name="new" type="password" [(ngModel)]="newPassword" required minlength="12" autocomplete="new-password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          <p class="mt-1 text-xs text-gray-500">At least 12 characters.</p>
+        </div>
+        <div>
+          <label for="pp-confirm" class="block text-sm font-medium text-gray-700 mb-1">New password again</label>
+          <input id="pp-confirm" name="confirm" type="password" [(ngModel)]="confirmPassword" required autocomplete="new-password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        </div>
+        @if (passwordError()) { <p class="text-sm text-red-700" role="alert">{{ passwordError() }}</p> }
+        @if (passwordNote()) { <p class="text-sm text-green-800" role="status">{{ passwordNote() }}</p> }
+        <button type="submit" [disabled]="pf.invalid || passwordBusy()"
+          class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+          {{ passwordBusy() ? 'Saving...' : 'Change password' }}
+        </button>
+      </form>
+    </section>
+
+    @if (!auth.passwordChangeRequired()) {
+      <section class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-sm font-semibold text-gray-900 mb-1">Email</h2>
+        <p class="text-xs text-gray-500 mb-4">
+          You sign in with it. We email a confirmation link to the new address; it changes only when you open it,
+          and your current address is told.
+        </p>
+        <form (ngSubmit)="changeEmail()" #ef="ngForm" class="space-y-3">
+          <div>
+            <label for="pp-email" class="block text-sm font-medium text-gray-700 mb-1">New email</label>
+            <input id="pp-email" name="email" type="email" [(ngModel)]="newEmail" required email
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          </div>
+          <div>
+            <label for="pp-email-pw" class="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+            <input id="pp-email-pw" name="emailPassword" type="password" [(ngModel)]="emailPassword" required autocomplete="current-password"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          </div>
+          @if (emailError()) { <p class="text-sm text-red-700" role="alert">{{ emailError() }}</p> }
+          @if (emailNote()) { <p class="text-sm text-green-800" role="status">{{ emailNote() }}</p> }
+          <button type="submit" [disabled]="ef.invalid || emailBusy()"
+            class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+            {{ emailBusy() ? 'Sending...' : 'Send confirmation link' }}
+          </button>
+        </form>
+      </section>
+
+      <section class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-sm font-semibold text-gray-900 mb-4">History</h2>
+        @if (a.changes.length === 0) {
+          <p class="text-sm text-gray-500">No changes yet.</p>
+        } @else {
+          <ul class="divide-y divide-gray-100 text-sm">
+            @for (c of a.changes; track $index) {
+              <li class="py-2">
+                <span class="text-gray-500">{{ c.changedAt | date: 'd MMM y, HH:mm' }}</span>
+                <span class="text-gray-900"> · {{ label(c.field) }}</span>
+                @if (c.oldValue || c.newValue) { <span class="text-gray-600">: {{ c.oldValue ?? '—' }} → {{ c.newValue ?? '—' }}</span> }
+                @if (c.changedByAdminId !== a.id) { <span class="text-gray-500"> (by {{ c.changedByName }})</span> }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </div>
+} @else if (!error()) {
+  <p class="text-sm text-gray-500">Loading...</p>
+}

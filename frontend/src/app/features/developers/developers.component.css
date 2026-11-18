@@ -1,0 +1,87 @@
+/* Developer guide (/developers): navy header like the rest of Certyfi's
+   public pages, then a contents rail and one reading column. */
+.dev-page {
+  --dv-bg: #fbfaf7;
+  --dv-surface: #ffffff;
+  --dv-code: #f3f1ec;
+  --dv-fg: #1a2233;
+  --dv-muted: #5b6475;
+  --dv-line: #e2ded5;
+  --dv-navy: #15223b;
+  --dv-accent: #7a2331;
+  --dv-gold: #b8892c;
+  min-height: 100dvh;
+  background: var(--dv-bg);
+  color: var(--dv-fg);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.dev-top { background: var(--dv-navy); color: #f7f5f0; }
+.dev-top-inner { max-width: 1120px; margin: 0 auto; padding: 22px 20px 34px; display: grid; gap: 10px; }
+.dev-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: #f7f5f0; text-decoration: none; margin-bottom: 18px; width: fit-content; }
+.dev-mark { width: 30px; height: 30px; border-radius: 999px; background: #7a2331; display: inline-flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1.5px #dcae4a; }
+.dev-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #e8a765; }
+.dev-top h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.15; text-wrap: balance; }
+.dev-lede { margin: 0; max-width: 62ch; color: #c9d1e2; font-size: 17px; }
+.dev-facts { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 10px 0 0; }
+.dev-facts div { display: grid; gap: 2px; min-width: 0; }
+.dev-facts dt { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #9fb0cf; }
+.dev-facts dd { margin: 0; font-size: 14px; word-break: break-all; }
+.dev-facts code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; color: #fff; }
+.dev-facts a { color: #f3c98f; }
+.dev-env { color: #ffb48a; font-weight: 600; word-break: normal; }
+
+.dev-body { max-width: 1120px; margin: 0 auto; padding: 36px 20px 60px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+@media (max-width: 860px) {
+  .dev-body { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-top: 24px; }
+  .dev-toc { position: static !important; max-height: none !important; }
+}
+.dev-toc { position: sticky; top: 20px; align-self: start; max-height: calc(100dvh - 40px); overflow-y: auto; display: grid; gap: 2px; font-size: 14px; }
+.dev-toc p { margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dv-muted); }
+.dev-toc a { color: var(--dv-muted); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid transparent; }
+.dev-toc a:hover, .dev-toc a:focus-visible { color: var(--dv-fg); border-left-color: var(--dv-accent); outline: none; }
+.dev-toc a.dev-toc-sub { padding-left: 22px; font-size: 13px; }
+
+.dev-doc { min-width: 0; }
+.dev-doc h2 { font-family: Georgia, "Times New Roman", serif; font-size: 26px; color: var(--dv-navy); margin: 40px 0 10px; scroll-margin-top: 16px; text-wrap: balance; }
+.dev-doc h2:first-child { margin-top: 0; }
+.dev-doc h3 { font-size: 18px; font-weight: 600; margin: 28px 0 6px; scroll-margin-top: 16px; }
+.dev-doc p, .dev-doc li { max-width: 70ch; }
+.dev-doc p { margin: 8px 0; }
+.dev-doc ul, .dev-doc ol { margin: 8px 0; padding-left: 22px; display: grid; gap: 6px; }
+.dev-doc ul { list-style: disc; }
+.dev-doc ol { list-style: decimal; }
+.dev-doc a { color: var(--dv-accent); text-decoration: underline; }
+.dev-doc strong { color: var(--dv-navy); }
+.dev-doc code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; background: var(--dv-code); padding: 1px 5px; border-radius: 4px; }
+/* Long addresses in running text wrap instead of widening the page. */
+.dev-doc :not(pre) > code { overflow-wrap: anywhere; }
+.dev-code { position: relative; margin: 12px 0; border: 1px solid var(--dv-line); border-radius: 8px; background: var(--dv-code); }
+.dev-code-lang { display: block; padding: 7px 14px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--dv-muted); }
+.dev-code pre { margin: 0; padding: 10px 14px 14px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; }
+.dev-code pre code { background: none; padding: 0; font-size: inherit; }
+.dev-copy { position: absolute; top: 6px; right: 6px; font-size: 12px; font-weight: 500; color: var(--dv-muted); background: var(--dv-surface); border: 1px solid var(--dv-line); border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+.dev-copy:hover { color: var(--dv-fg); }
+.dev-copy:focus-visible { outline: 2px solid var(--dv-accent); outline-offset: 1px; }
+.dev-table { overflow-x: auto; margin: 12px 0; border: 1px solid var(--dv-line); border-radius: 8px; background: var(--dv-surface); }
+.dev-table table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.dev-table th, .dev-table td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--dv-line); vertical-align: top; }
+.dev-table th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dv-muted); font-weight: 600; background: var(--dv-code); }
+.dev-table tr:last-child td { border-bottom: 0; }
+.dev-loading { color: var(--dv-muted); }
+.dev-foot { max-width: 1120px; margin: 0 auto; padding: 18px 20px 36px; border-top: 1px solid var(--dv-line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--dv-muted); }
+
+/* Language tabs over the examples. */
+.dev-tabs { margin: 12px 0; }
+.dev-tabs [role=tablist] { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--dv-line); }
+.dev-tabs [role=tab] { font-size: 13px; font-weight: 500; color: var(--dv-muted); background: none; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; padding: 6px 12px; margin-bottom: -1px; cursor: pointer; }
+.dev-tabs [role=tab]:hover { color: var(--dv-fg); }
+.dev-tabs [role=tab][aria-selected=true] { color: var(--dv-fg); background: var(--dv-code); border-color: var(--dv-line); }
+.dev-tabs [role=tab]:focus-visible { outline: 2px solid var(--dv-accent); outline-offset: -2px; }
+.dev-tabs .dev-code { margin-top: 0; border-top-left-radius: 0; }
+.dev-doc h4 { font-size: 16px; font-weight: 600; margin: 22px 0 6px; }
+/* Screenshots in guides. */
+.dev-figure { margin: 16px 0; }
+.dev-figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--dv-line); border-radius: 8px; box-shadow: 0 8px 24px -16px rgba(21, 34, 59, 0.35); }
+.dev-figure figcaption { margin-top: 6px; font-size: 13px; color: var(--dv-muted); }
+.dev-doc h4 { scroll-margin-top: 16px; }

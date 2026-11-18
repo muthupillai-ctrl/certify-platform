@@ -1,0 +1,97 @@
+<form (ngSubmit)="submit()" #f="ngForm" class="bg-white border border-gray-200 rounded-lg p-6 max-w-2xl">
+  <fieldset class="mb-6">
+    <legend class="text-sm font-semibold text-gray-900 mb-1">Public details</legend>
+    <p class="text-xs text-gray-500 mb-4">Shown on every certificate's verification page and in digital credentials, so verifiers know who issued them.</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <label for="p-name" class="block text-sm font-medium text-gray-700 mb-1">Display name</label>
+        <input id="p-name" name="name" [(ngModel)]="draft.name" required maxlength="200"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="p-legal" class="block text-sm font-medium text-gray-700 mb-1">Legal name</label>
+        <input id="p-legal" name="legalName" [(ngModel)]="draft.legalName" maxlength="300"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="p-web" class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+        <input id="p-web" name="websiteUrl" [(ngModel)]="draft.websiteUrl" maxlength="500" placeholder="https://example.edu" type="url"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-reg" class="block text-sm font-medium text-gray-700 mb-1">Registration / affiliation number</label>
+        <input id="p-reg" name="registrationNumber" [(ngModel)]="draft.registrationNumber" maxlength="100"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-acc" class="block text-sm font-medium text-gray-700 mb-1">Accredited by</label>
+        <input id="p-acc" name="accreditationBody" [(ngModel)]="draft.accreditationBody" maxlength="200"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-city" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+        <input id="p-city" name="city" [(ngModel)]="draft.city" maxlength="100"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-country" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+        <input id="p-country" name="country" [(ngModel)]="draft.country" maxlength="100"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="p-about" class="block text-sm font-medium text-gray-700 mb-1">About</label>
+        <textarea id="p-about" name="about" [(ngModel)]="draft.about" maxlength="1000" rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"></textarea>
+        <p class="mt-1 text-xs text-gray-500">{{ draft.about?.length ?? 0 }}/1000</p>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="mb-6">
+    <legend class="text-sm font-semibold text-gray-900 mb-1">Contact and address</legend>
+    <p class="text-xs text-gray-500 mb-4">Private: only your institution's admins and Certyfi support can see these.</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label for="p-email" class="block text-sm font-medium text-gray-700 mb-1">Contact email</label>
+        <input id="p-email" name="contactEmail" [(ngModel)]="draft.contactEmail" maxlength="320" type="email"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-phone" class="block text-sm font-medium text-gray-700 mb-1">Contact phone</label>
+        <input id="p-phone" name="contactPhone" [(ngModel)]="draft.contactPhone" maxlength="40" type="tel"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="p-a1" class="block text-sm font-medium text-gray-700 mb-1">Address line 1</label>
+        <input id="p-a1" name="addressLine1" [(ngModel)]="draft.addressLine1" maxlength="200"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div class="sm:col-span-2">
+        <label for="p-a2" class="block text-sm font-medium text-gray-700 mb-1">Address line 2</label>
+        <input id="p-a2" name="addressLine2" [(ngModel)]="draft.addressLine2" maxlength="200"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-region" class="block text-sm font-medium text-gray-700 mb-1">State / region</label>
+        <input id="p-region" name="region" [(ngModel)]="draft.region" maxlength="100"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="p-postal" class="block text-sm font-medium text-gray-700 mb-1">Postal code</label>
+        <input id="p-postal" name="postalCode" [(ngModel)]="draft.postalCode" maxlength="20"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+    </div>
+  </fieldset>
+
+  @if (error) {
+    <p class="text-sm text-red-700 mb-4" role="alert">{{ error }}</p>
+  }
+  @if (savedMessage) {
+    <p class="text-sm text-green-700 mb-4" role="status">{{ savedMessage }}</p>
+  }
+  <button type="submit" [disabled]="f.invalid || saving"
+    class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+    {{ saving ? 'Saving...' : 'Save profile' }}
+  </button>
+</form>

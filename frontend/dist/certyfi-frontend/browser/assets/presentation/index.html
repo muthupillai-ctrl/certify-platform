@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certyfi — What We&#x27;re Building</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Standalone copy of the Certyfi presentation. Source: docs/presentation/slides/*.html (deck order in deck.json).
+     Slides are authored on a 1920x1080 canvas and scaled to the window. Arrow keys / space page through; N toggles notes. */
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: #0B1222; height: 100%; }
+  body { font-family: 'IBM Plex Sans', Arial, sans-serif; overflow: hidden; }
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .frame { width: 1920px; height: 1080px; position: relative; transform-origin: center center; flex: none; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .frame > section { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  /* Each slide sets its own display in its inline style, so hiding needs !important. Screen only: print shows every slide. */
+  @media screen { .frame > section:not(.current) { display: none !important; } }
+  section ul { padding-left: 1.2em; }
+  section table { border-collapse: collapse; width: 100%; }
+  section th, section td { text-align: left; padding: 18px 28px; border-bottom: 1px solid #DCE2EA; vertical-align: top; }
+  section h1, section h2, section h3 { font-weight: 600; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 16px; align-items: center; justify-content: space-between;
+          padding: 10px 20px; font-size: 14px; color: #9FB0C9; background: rgba(11,18,34,.85); }
+  .bar button { background: #1F3052; color: #F7F5F0; border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .notes { position: fixed; left: 50%; transform: translateX(-50%); bottom: 56px; max-width: 900px; width: calc(100% - 40px);
+            background: #F7F5F0; color: #15223B; padding: 16px 20px; border-radius: 10px; font-size: 16px; line-height: 1.5; display: none; }
+  body.show-notes .notes { display: block; }
+  @media print {
+    html, body { background: #fff; overflow: visible; height: auto; }
+    .bar, .notes { display: none !important; }
+    .stage { position: static; display: block; }
+    .frame { transform: none !important; box-shadow: none; width: auto; height: auto; }
+    .frame > section { position: relative; break-after: page; }
+    @page { size: 1920px 1080px; margin: 0; }
+  }
+  @media (max-width: 640px) { .bar > span:nth-child(2) { display: none; } }
+</style>
+</head>
+<body>
+<div class="stage"><div class="frame" id="frame">
+<section id="cover" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; justify-content:space-between">
+<div style="position:absolute; left:0; top:0; width:24px; height:1080px; background:#D97A2B"></div>
+<p style="font-size:28px; font-weight:600; letter-spacing:4px; text-transform:uppercase; color:#E8A765">By Ahamsys</p>
+<div style="display:flex; flex-direction:column; gap:32px">
+<h1 style="font-family:'Source Serif 4', Georgia, serif; font-size:160px; font-weight:600; line-height:1.0; color:#F7F5F0">Certyfi</h1>
+<p style="font-size:48px; line-height:1.3; color:#C9D3E3; width:1300px">Digital certificates that institutions issue in minutes and anyone can verify in seconds.</p>
+</div>
+<p style="font-size:28px; color:#9FB0C9">certyfi.ahamsys.com · info@ahamsys.com</p>
+
+</section>
+<section id="problem" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:64px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">The problem</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Paper and PDF certificates are easy to fake and slow to check</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px">
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:48px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Warning"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">Easy to forge</h3>
+<p style="font-size:28px; line-height:1.45; color:#4A5568">A scanned certificate or PDF can be edited with ordinary tools, and the copy looks genuine.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:48px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Clock"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">Slow to verify</h3>
+<p style="font-size:28px; line-height:1.45; color:#4A5568">Employers and universities email or phone the issuing institution and wait days for an answer.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:48px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Users"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.8 0 4.5 1.9 4.5 5"/></svg>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">One person can issue</h3>
+<p style="font-size:28px; line-height:1.45; color:#4A5568">Without a second check, a single staff member can issue a certificate that should never exist.</p>
+</div>
+</div>
+
+</section>
+<section id="what" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:64px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">What Certyfi is</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">One platform to design, issue, manage and verify</h2>
+</div>
+<div style="display:flex; gap:64px">
+<div style="flex:1; display:flex; flex-direction:column; gap:24px; border-top:6px solid #1D5FD1; padding:40px 0 0 0">
+<h3 style="font-size:40px; font-weight:600; line-height:1.2">Two people for every certificate</h3>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">One person prepares it and a different person approves it. The system blocks self-approval, even for administrators.</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:24px; border-top:6px solid #1D5FD1; padding:40px 0 0 0">
+<h3 style="font-size:40px; font-weight:600; line-height:1.2">Proof that doesn't depend on us</h3>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">Each certificate is signed with the institution's own key, using open international standards, and its history is timestamped on Bitcoin.</p>
+</div>
+<div style="flex:1; display:flex; flex-direction:column; gap:24px; border-top:6px solid #1D5FD1; padding:40px 0 0 0">
+<h3 style="font-size:40px; font-weight:600; line-height:1.2">Many institutions, fully separate</h3>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">Each institution has its own isolated workspace, users, branding and signing key.</p>
+</div>
+</div>
+
+</section>
+<section id="example" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#E8A765">See it</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1; color:#F7F5F0">Issued, then checked on any phone</h2>
+</div>
+<div style="display:flex; gap:48px; align-items:center">
+<img src="images/example-certificate.png" alt="An example certificate of graduation for Adaeze Okonkwo, Bachelor of Science in Computer Science, from Example Institute of Technology, with a QR code and certificate code" style="width:686px; height:600px; object-fit:contain; border-radius:12px">
+<img src="images/example-phone.png" alt="The same certificate on a phone after scanning its QR code: a green banner reads Valid certificate, issued by Example Institute of Technology, above the certificate and buttons to download it or add it to LinkedIn" style="width:416px; height:600px; object-fit:contain; border-radius:28px; border:8px solid #0B1222">
+<div style="flex:1; display:flex; flex-direction:column; gap:28px">
+<p style="font-size:28px; line-height:1.4; color:#C9D3E3"><b style="color:#F7F5F0">On paper or PDF</b>, with a QR code and a short certificate code.</p>
+<p style="font-size:28px; line-height:1.4; color:#C9D3E3"><b style="color:#F7F5F0">Scan it</b> and any phone says at once whether it is valid. No app, no login.</p>
+<p style="font-size:28px; line-height:1.4; color:#C9D3E3"><b style="color:#F7F5F0">The recipient</b> can download it, add it to LinkedIn, or keep the signed digital file.</p>
+<p style="font-size:24px; line-height:1.4; color:#9FB0C9">Example with demo data</p>
+</div>
+</div>
+
+</section>
+<section id="flow" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:80px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">How it works</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">From template to verified certificate</h2>
+</div>
+<div style="display:flex; align-items:center; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">1</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Design</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Admin designs certificate and marks-card templates</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">2</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Prepare</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Registrar enters the recipient and details</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">3</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Approve</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">A different person reviews and approves</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">4</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Sign</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Signed with the institution's key and recorded</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#D97A2B">5</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Verify</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Anyone scans the QR code, no login needed</p>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">After issue, suspending and revoking happen on a separate, deliberate page, and revoking needs a second approver too. Expiry is shown automatically.</p>
+
+</section>
+<section id="roles" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Who uses it</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Each role sees only what it needs</h2>
+</div>
+<table style="font-size:30px; color:#15223B; background:#FFFFFF; border-radius:16px">
+<tr style="background:#15223B"><th style="width:30%; color:#F7F5F0; padding:20px 32px">Role</th><th style="width:70%; color:#F7F5F0">What they do</th></tr>
+<tr><td>Platform operator</td><td>Onboards institutions and oversees operations</td></tr>
+<tr><td>Institution Admin</td><td>Users, templates, branding, API keys, reports and the audit trail</td></tr>
+<tr><td>Registrar</td><td>Prepares certificates and imports paper records</td></tr>
+<tr><td>Approver</td><td>Approves certificates and imports, and handles revocations</td></tr>
+<tr><td>Student</td><td>Sees, and where needed pays for, their own certificates in the student portal</td></tr>
+<tr><td>Verifier</td><td>Anyone checking a certificate, with no account</td></tr>
+</table>
+
+</section>
+<section id="manage" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Day to day</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Built for thousands of certificates</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Chart"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Dashboard</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">What needs attention today, and issuing and verification trends, one click from the list behind each number.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Search"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Certificates</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Instant search and filters, approve a whole queue at once, export to a spreadsheet, and share any view as a link.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Verified"><path d="M12 2.5 14.6 5l3.5-.3.6 3.5 3 1.9-1.5 3.2 1.5 3.2-3 1.9-.6 3.5-3.5-.3L12 24l-2.6-2.4-3.5.3-.6-3.5-3-1.9 1.5-3.2-1.5-3.2 3-1.9.6-3.5 3.5.3z" transform="scale(.9) translate(1.3 .2)"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Verification</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Answer an employer's call in seconds, and see every public check, with forgery attempts flagged.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Book"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Reports</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Issuance, status changes and staff activity for any period, ready for audits and accreditation reviews.</p>
+</div>
+</div>
+</div>
+
+</section>
+<section id="paper" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:64px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Paper certificates</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Years of paper records, verifiable online</h2>
+</div>
+<div style="display:flex; align-items:center; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">1</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Upload</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">The existing Excel or CSV list of past certificates</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">2</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Check</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Every row checked first, problems explained</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">3</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Approve</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">A second person approves the whole batch</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-size:56px; font-weight:600; color:#D97A2B">4</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Verifiable</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Signed, with a QR code, and findable by the old number</p>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">Honest dating: each certificate shows its original paper date and states that it was digitally re-issued on the day it was imported.</p>
+
+</section>
+<section id="trust" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">The trust layer</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Four independent layers, each stopping a different fraud</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Search"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Official record</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Stops edited PDFs: verification always shows the institution's own record.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Key"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Digital signature</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Stops forgery: signed with the institution's own key, checkable with standard tools.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Link"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Tamper-evident audit trail</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Stops silent changes: every action is chained to the one before it and can't be edited.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Lock"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Bitcoin anchoring</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Stops rewriting history, even by us: the audit trail is timestamped on Bitcoin.</p>
+</div>
+</div>
+</div>
+
+</section>
+<section id="signature" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#E8A765">Digital signature</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1; color:#F7F5F0">How the digital signature works</h2>
+</div>
+<div style="display:flex; align-items:center; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#1F3052; padding:36px; border-radius:16px">
+<p style="font-size:44px; font-weight:600; color:#E8A765">1</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Fingerprint</h3>
+<p style="font-size:26px; line-height:1.4; color:#C9D3E3">The certificate's details become a unique fingerprint. Change one letter and it no longer matches.</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#1F3052; padding:36px; border-radius:16px">
+<p style="font-size:44px; font-weight:600; color:#E8A765">2</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Seal</h3>
+<p style="font-size:26px; line-height:1.4; color:#C9D3E3">The institution's private key seals that fingerprint. No other key can make the same seal.</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#1F3052; padding:36px; border-radius:16px">
+<p style="font-size:44px; font-weight:600; color:#E8A765">3</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Check</h3>
+<p style="font-size:26px; line-height:1.4; color:#C9D3E3">Anyone checks the seal with the institution's public key. It passes only if nothing changed.</p>
+</div>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; gap:24px; padding:32px; border:1px solid #3A4E73; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#E8A765; width:48px; height:48px; flex:none" aria-label="Lock"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:30px; font-weight:600; line-height:1.2; color:#F7F5F0">Private key: kept secret</h3>
+<p style="font-size:26px; line-height:1.4; color:#C9D3E3">One per institution, stored encrypted, used only inside the signing service. Never shown or sent anywhere.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; padding:32px; border:1px solid #3A4E73; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#E8A765; width:48px; height:48px; flex:none" aria-label="Key"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:30px; font-weight:600; line-height:1.2; color:#F7F5F0">Public key: open to all</h3>
+<p style="font-size:26px; line-height:1.4; color:#C9D3E3">Published for anyone to check signatures with standard tools such as OpenSSL. No Certyfi software needed.</p>
+</div>
+</div>
+</div>
+
+</section>
+<section id="selfcheck" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Standard tools</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Check a signature yourself</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px">
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#1D5FD1">1</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Copy three things</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">From the certificate's verification page: the public key, the signature and the fingerprint.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#1D5FD1">2</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Run OpenSSL</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Free, and included with macOS and Linux. No Certyfi software is involved.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#D97A2B">3</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Read the answer</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">"Verified OK" means genuine. Change one character and the check fails.</p>
+</div>
+</div>
+<div style="display:flex; flex-direction:column; gap:10px; background:#15223B; padding:32px 40px; border-radius:16px; font-family:monospace">
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> printf '%s' '5ca3a66a…f1ab16da' &gt; fingerprint.txt</p>
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> openssl base64 -d -A -in signature.txt -out signature.der</p>
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> openssl dgst -sha256 -verify key.pem -signature signature.der fingerprint.txt</p>
+<p style="font-size:26px; line-height:1.5; color:#7FD49B"><b>Verified OK</b></p>
+</div>
+
+</section>
+<section id="bitcoin" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Why Bitcoin</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">A public record no one can rewrite</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:64px">
+<div style="display:flex; flex-direction:column; gap:28px">
+<h3 style="font-size:40px; font-weight:600; line-height:1.2">What is Bitcoin?</h3>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">Besides being a currency, Bitcoin is a worldwide public ledger kept by thousands of independent computers. Anything written into it gets a date, and can never be changed or removed, by anyone.</p>
+<p style="font-size:28px; line-height:1.45; color:#15223B; background:#FFFFFF; padding:28px 32px; border-radius:16px; border:1px solid #CFD8E3">We use it as a <b>public notary, not as money</b>: no cryptocurrency is bought, held or paid, and no one needs a Bitcoin wallet.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:16px">
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:32px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Lock"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Not even we can rewrite history</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Records can't be backdated or quietly changed afterwards.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:32px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Globe"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Proof that outlives us</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Anyone can check it with free, open tools, even without Certyfi.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:32px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Verified"><path d="M12 2.5 14.6 5l3.5-.3.6 3.5 3 1.9-1.5 3.2 1.5 3.2-3 1.9-.6 3.5-3.5-.3L12 24l-2.6-2.4-3.5.3-.6-3.5-3-1.9 1.5-3.2-1.5-3.2 3-1.9.6-3.5 3.5.3z" transform="scale(.9) translate(1.3 .2)"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Private by design</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Only a digital fingerprint is recorded, never names or details.</p>
+</div>
+</div>
+</div>
+</div>
+
+</section>
+<section id="verify" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:grid; grid-template-columns:1fr 1fr; gap:96px; align-items:center">
+<div style="display:flex; flex-direction:column; gap:24px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Verification</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Anyone can check a certificate in seconds</h2>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">Free for anyone, with no account and no phone call. Every check shows the official record and its status (active, suspended, revoked or expired), and the browser checks the signature itself.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:0px">
+<div style="display:flex; gap:28px; align-items:center; background:#FFFFFF; padding:28px 36px; border:1px solid #DCE2EA">
+<p style="font-size:44px; font-weight:600; color:#1D5FD1; width:56px">1</p>
+<p style="flex:1; font-size:28px; line-height:1.4">Scan the QR code or open the link, even offline in the Certyfi Verify app</p>
+</div>
+<div style="display:flex; gap:28px; align-items:center; background:#FFFFFF; padding:28px 36px; border:1px solid #DCE2EA; border-top:none">
+<p style="font-size:44px; font-weight:600; color:#1D5FD1; width:56px">2</p>
+<p style="flex:1; font-size:28px; line-height:1.4">Type the code printed on the certificate</p>
+</div>
+<div style="display:flex; gap:28px; align-items:center; background:#FFFFFF; padding:28px 36px; border:1px solid #DCE2EA; border-top:none">
+<p style="font-size:44px; font-weight:600; color:#1D5FD1; width:56px">3</p>
+<p style="flex:1; font-size:28px; line-height:1.4">An older paper certificate: its number and the name as printed</p>
+</div>
+<div style="display:flex; gap:28px; align-items:center; background:#FFFFFF; padding:28px 36px; border:1px solid #DCE2EA; border-top:none">
+<p style="font-size:44px; font-weight:600; color:#1D5FD1; width:56px">4</p>
+<p style="flex:1; font-size:28px; line-height:1.4">Check a digital credential file (Open Badges 3.0)</p>
+</div>
+<div style="display:flex; gap:28px; align-items:center; background:#FFFFFF; padding:28px 36px; border:1px solid #DCE2EA; border-top:none">
+<p style="font-size:44px; font-weight:600; color:#D97A2B; width:56px">5</p>
+<p style="flex:1; font-size:28px; line-height:1.4">Optional: download the Bitcoin proof and check it independently</p>
+</div>
+</div>
+
+</section>
+<section id="recipient" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">For the recipient</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">What the recipient gets</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Book"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">A PDF with a QR code</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">To print or attach to applications. Anyone can scan it to check it.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Link"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">A link to share</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">The certificate's own verification page, always showing its current status.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Users"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.8 0 4.5 1.9 4.5 5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Add to LinkedIn</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">One click fills in LinkedIn's certification form, linking back to the proof.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Key"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">A signed digital credential</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">An Open Badges 3.0 file for digital wallets, checkable anywhere without Certyfi.</p>
+</div>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">For certificates and for marks cards with subject-wise results, all also in the recipient's own student portal.</p>
+
+</section>
+<section id="portal" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">For the recipient</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">A student portal of their own</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Lock"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Their own sign-in</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Set up from a personal emailed link, with "forgot password" built in.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Book"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Every certificate in one place</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Old and new, from staff, paper records or a connected system.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:56px; height:56px; flex:none" aria-label="Link"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">An email at every step</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">When a certificate is requested, issued, rejected, suspended or revoked.</p>
+</div>
+</div>
+<div style="display:flex; gap:28px; background:#FFFFFF; padding:40px; border:1px solid #DCE2EA; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:56px; height:56px; flex:none" aria-label="Verified"><path d="M12 2.5 14.6 5l3.5-.3.6 3.5 3 1.9-1.5 3.2 1.5 3.2-3 1.9-.6 3.5-3.5-.3L12 24l-2.6-2.4-3.5.3-.6-3.5-3-1.9 1.5-3.2-1.5-3.2 3-1.9.6-3.5 3.5.3z" transform="scale(.9) translate(1.3 .2)"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:10px">
+<h3 style="font-size:34px; font-weight:600; line-height:1.2">Pay, then it's issued</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Where the institution charges, students pay by a due date, with a reminder first.</p>
+</div>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">Institutions can invite all their past recipients to the portal at once.</p>
+
+</section>
+<section id="partner" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#E8A765">Partner API</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1; color:#F7F5F0">Other systems can issue certificates automatically</h2>
+<p style="font-size:30px; line-height:1.45; color:#C9D3E3; width:1500px">For example, LMSpromise the moment a learner completes a course.</p>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">One key per system</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Admins create and revoke keys with chosen permissions. Each key sees only its own certificates.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Approval stays in control</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">An approver reviews each one unless an admin trusts the system. Revoking always needs a person.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Students handled for you</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Send a student ID: Certyfi creates the student, emails them, and can take payment first.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Instant updates</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Certyfi tells the system the moment a certificate is paid, issued or revoked, signed and retried.</p>
+</div>
+</div>
+
+</section>
+<section id="security" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Security</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Protection built into every layer</h2>
+</div>
+<table style="font-size:28px; color:#15223B">
+<tr style="background:#E9EEF3"><th style="width:34%; padding:18px 28px">Concern</th><th style="width:66%">How Certyfi addresses it</th></tr>
+<tr><td>Separation between institutions</td><td>Each institution's data is stored separately and checked on every request</td></tr>
+<tr><td>Fraudulent issuance</td><td>Mandatory two-person approval, including imported batches</td></tr>
+<tr><td>Wrongful revocation</td><td>Separate page, typed confirmation and a second approver</td></tr>
+<tr><td>Forged certificates</td><td>Digital signatures under each institution's own key</td></tr>
+<tr><td>Tampering with history</td><td>Append-only audit trail, anchored to Bitcoin</td></tr>
+<tr><td>Key protection</td><td>A separate signing key per institution, encrypted at rest</td></tr>
+<tr><td>Connected systems</td><td>Hashed API keys with limited permissions, rate limits and signed webhooks</td></tr>
+<tr><td>Personal data</td><td>Kept off the audit chain, so it can be erased on request</td></tr>
+</table>
+
+</section>
+<section id="privacy" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Privacy and data protection</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Personal data, handled with care</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:48px; height:48px; flex:none" aria-label="Users"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.8 0 4.5 1.9 4.5 5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">The institution stays in control</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Each institution's data is kept separate and used only to issue and verify its certificates.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:48px; height:48px; flex:none" aria-label="Search"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Only what a verifier needs</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Public pages never show email addresses or internal notes.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:48px; height:48px; flex:none" aria-label="Lock"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Checkers stay anonymous</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Who checks a certificate is never recorded, only that it was checked.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:48px; height:48px; flex:none" aria-label="Trust"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3z"/><path d="m9 12 2 2 4-4"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Erasure on request</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Personal details can be erased without breaking the tamper-evident audit trail.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#1D5FD1; width:48px; height:48px; flex:none" aria-label="Globe"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Nothing personal on Bitcoin</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Only anonymous fingerprints are timestamped, never names or details.</p>
+</div>
+</div>
+<div style="display:flex; gap:24px; background:#FFFFFF; padding:28px 36px; border:1px solid #CFD8E3; border-radius:16px">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#D97A2B; width:48px; height:48px; flex:none" aria-label="Book"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v3H6.5"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:8px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Agreed with each institution</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Data-protection terms, including where data is hosted, are agreed before it starts.</p>
+</div>
+</div>
+</div>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Designed around the principles of Nigeria's Data Protection Act 2023 and similar laws across Africa.</p>
+
+</section>
+<section id="status" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:64px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Where we are</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Under development, with good progress</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px">
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:48px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-family:'Source Serif 4', Georgia, serif; font-size:120px; font-weight:600; line-height:1.0; color:#1D5FD1">15</p>
+<p style="font-size:30px; line-height:1.4; color:#4A5568">major capabilities built and working end to end</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:48px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-family:'Source Serif 4', Georgia, serif; font-size:120px; font-weight:600; line-height:1.0; color:#1D5FD1">201</p>
+<p style="font-size:30px; line-height:1.4; color:#4A5568">automated end-to-end tests, all passing</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:48px; border-radius:16px; border:1px solid #CFD8E3">
+<p style="font-family:'Source Serif 4', Georgia, serif; font-size:120px; font-weight:600; line-height:1.0; color:#D97A2B">4</p>
+<p style="font-size:30px; line-height:1.4; color:#4A5568">independent trust layers behind every certificate</p>
+</div>
+</div>
+<p style="font-size:30px; line-height:1.45; color:#4A5568">Built so far: institutions and roles, visual template designer, two-person issuance and revocation, signing, audit trail, Bitcoin anchoring, verification by QR code, printed code, paper number or file, dashboard, reports, paper import, the Partner API with instant updates, a student portal, email notifications and pay before issue.</p>
+
+</section>
+<section id="next" data-transition="fade" style="background:#E9EEF3; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:56px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">What's next</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">From development to first institutions</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px">
+<div style="display:flex; flex-direction:column; gap:20px; border-top:6px solid #D97A2B; padding:36px 0 0 0">
+<p style="font-size:26px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#A8561A">Now</p>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">Pilot</h3>
+<ul style="font-size:28px; line-height:1.5; color:#4A5568">
+<li>Onboard the first pilot institution</li>
+<li>Import the pilot's paper certificates</li>
+<li>Connect LMSpromise, with instant updates</li>
+<li>Automated daily backups</li>
+</ul>
+</div>
+<div style="display:flex; flex-direction:column; gap:20px; border-top:6px solid #1D5FD1; padding:36px 0 0 0">
+<p style="font-size:26px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#1D5FD1">Next</p>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">Grow</h3>
+<ul style="font-size:28px; line-height:1.5; color:#4A5568">
+<li>Real online payments and refunds</li>
+<li>Stronger sign-in for staff</li>
+<li>Email history for staff</li>
+</ul>
+</div>
+<div style="display:flex; flex-direction:column; gap:20px; border-top:6px solid #9FB0C9; padding:36px 0 0 0">
+<p style="font-size:26px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#4A5568">Later</p>
+<h3 style="font-size:36px; font-weight:600; line-height:1.2">Enterprise</h3>
+<ul style="font-size:28px; line-height:1.5; color:#4A5568">
+<li>Cloud key management and key rotation</li>
+<li>Digital wallet integrations</li>
+<li>Each institution's own academic year in reports</li>
+</ul>
+</div>
+</div>
+
+</section>
+<section id="start" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:80px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Getting started</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">From first call to first certificate</h2>
+</div>
+<div style="display:flex; align-items:center; gap:16px">
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #DCE2EA">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">1</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Set up</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">We create your institution and admin login</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #DCE2EA">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">2</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Branding</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Add your logo, colours and staff logins</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #DCE2EA">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">3</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Templates</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Design your certificates and marks cards</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #DCE2EA">
+<p style="font-size:56px; font-weight:600; color:#1D5FD1">4</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Past records</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Import old paper certificates</p>
+</div>
+<svg viewBox="0 0 48 28" style=" width:48px; height:28px; flex:none" aria-hidden="true"><path d="M0 8h28V0l20 14-20 14v-8H0z" fill="#9FB0C9"/></svg>
+<div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:36px; border-radius:16px; border:1px solid #DCE2EA">
+<p style="font-size:56px; font-weight:600; color:#D97A2B">5</p>
+<h3 style="font-size:32px; font-weight:600; line-height:1.2">Issue</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Start issuing, or connect your own systems</p>
+</div>
+</div>
+<p style="font-size:28px; line-height:1.4; color:#4A5568">Free during the pilot phase. Everything happens in the browser, with nothing to install. Step 4 is optional.</p>
+
+</section>
+<section id="close" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; justify-content:center; gap:40px">
+<div style="position:absolute; left:0; top:0; width:24px; height:1080px; background:#D97A2B"></div>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:96px; font-weight:600; line-height:1.1; color:#F7F5F0; width:1500px">Ready for a pilot institution</h2>
+<p style="font-size:40px; line-height:1.4; color:#C9D3E3; width:1400px">Certificates issued in minutes, verified in seconds, and provable without trusting us.</p>
+<div style="display:flex; flex-direction:column; gap:16px; border-top:2px solid #3A4E73; padding:40px 0 0 0; width:1200px">
+<p style="font-size:32px; font-weight:600; color:#E8A765">Interested in a pilot? It's free during the pilot phase. Get in touch.</p>
+<p style="font-size:36px; line-height:1.4; color:#F7F5F0">info@ahamsys.com</p>
+<p style="font-size:36px; line-height:1.4; color:#F7F5F0">+234 706 289 1305</p>
+<p style="font-size:28px; line-height:1.4; color:#9FB0C9">certyfi.ahamsys.com</p>
+</div>
+
+</section>
+</div></div>
+<div class="notes" id="notes"></div>
+<div class="bar"><span id="count"></span><span>← → to navigate · print for PDF</span><span><button id="nav-prev">Previous</button> <button id="nav-next">Next</button></span></div>
+<script>
+const NOTES = {};
+const slides = [...document.querySelectorAll('#frame > section')];
+let i = Math.max(0, slides.findIndex(s => '#' + s.id === location.hash));
+function fit() { const f = document.getElementById('frame'); const k = Math.min(innerWidth / 1920, (innerHeight - 48) / 1080); f.style.transform = `scale(${k})`; }
+function show(n) {
+  i = Math.min(Math.max(n, 0), slides.length - 1);
+  slides.forEach((s, j) => s.classList.toggle('current', j === i));
+  document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
+  document.getElementById('notes').textContent = NOTES[slides[i].id] || '';
+  history.replaceState(null, '', '#' + slides[i].id);
+}
+addEventListener('keydown', e => {
+  if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
+  if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+  if (e.key === 'Home') show(0);
+  if (e.key === 'End') show(slides.length - 1);
+});
+document.getElementById('nav-prev').onclick = () => show(i - 1);
+// Button ids are prefixed: a slide may be called "next" too.
+document.getElementById('nav-next').onclick = () => show(i + 1);
+let touchX = null;
+addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+addEventListener('touchend', e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  touchX = null;
+  if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+});
+addEventListener('resize', fit); fit(); show(i);
+</script>
+</body>
+</html>

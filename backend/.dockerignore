@@ -1,0 +1,6 @@
+# Local build output and tests never go into the image (they'd override the
+# image's own restore with this machine's paths).
+**/bin/
+**/obj/
+tests/
+**/appsettings.Development.json

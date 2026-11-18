@@ -1,0 +1,133 @@
+<div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-900">Student portal banners</h1>
+    <p class="text-sm text-gray-500 mt-1 max-w-2xl">
+      Your own images beside the student portal (courses, events, admissions), on the left and right of the student's
+      certificates and sign-in page; below them on phones. Tall images work best: about 480 × 960 pixels.
+    </p>
+  </div>
+  @if (institutionSlug) {
+    <a [href]="'/student/' + institutionSlug + '/login'" target="_blank" rel="noopener"
+      class="px-3 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50">Open the student portal ↗</a>
+  }
+</div>
+
+@if (error()) {
+  <p class="text-sm text-red-700 mb-4" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="text-sm text-gray-500">Loading...</p>
+} @else {
+  <!-- Layout preview: left column, portal, right column. -->
+  <div class="grid gap-5 lg:grid-cols-[1fr_220px_1fr] items-start">
+    @for (col of [{ side: 'Left', list: left() }, { side: 'Right', list: right() }]; track col.side; let isRight = $last) {
+      <section [class]="isRight ? 'bg-white border border-gray-200 rounded-xl p-4 lg:order-3' : 'bg-white border border-gray-200 rounded-xl p-4 lg:order-1'" [attr.aria-label]="col.side + ' column'">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-900">{{ col.side }} column</h2>
+          <button type="button" (click)="add($any(col.side))" [disabled]="col.list.length >= 6"
+            class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-40 cursor-pointer">Add banner</button>
+        </div>
+        @if (col.list.length === 0) {
+          <p class="text-sm text-gray-500 py-6 text-center">No banners on this side.</p>
+        }
+        <ul class="space-y-3">
+          @for (b of col.list; track b.id; let first = $first; let last = $last) {
+            <li class="flex gap-3 border border-gray-200 rounded-lg p-2.5" [class.opacity-60]="!live(b)">
+              <img [src]="b.imageUrl" [alt]="b.title" class="w-16 h-24 object-cover rounded bg-gray-100 shrink-0" />
+              <div class="min-w-0 flex-1 text-sm">
+                <p class="font-medium text-gray-900 truncate">{{ b.title }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ b.linkUrl ?? 'No link' }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ runLabel(b) }} · {{ b.clickCount }} click{{ b.clickCount === 1 ? '' : 's' }}</p>
+                <p class="text-xs mt-1">
+                  @if (live(b)) { <span class="text-green-700 font-medium">Showing now</span> }
+                  @else if (!b.isActive) { <span class="text-gray-500">Switched off</span> }
+                  @else { <span class="text-amber-700">Not in its dates</span> }
+                </p>
+                <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                  <button type="button" (click)="edit(b)" class="underline cursor-pointer">Edit</button>
+                  <button type="button" (click)="toggle(b)" class="underline cursor-pointer">{{ b.isActive ? 'Switch off' : 'Switch on' }}</button>
+                  <button type="button" (click)="move(b, -1)" [disabled]="first" class="underline disabled:opacity-30 cursor-pointer" aria-label="Move up">↑ Up</button>
+                  <button type="button" (click)="move(b, 1)" [disabled]="last" class="underline disabled:opacity-30 cursor-pointer" aria-label="Move down">↓ Down</button>
+                  <button type="button" (click)="deleting.set(b)" class="underline text-red-700 cursor-pointer">Delete</button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+    <div class="hidden lg:flex lg:order-2 flex-col items-center justify-start gap-2 rounded-xl border-2 border-dashed border-gray-300 p-4 min-h-64 text-center text-sm text-gray-500">
+      <span class="font-medium text-gray-700">Student's certificates</span>
+      <span>Your banners appear on either side of this.</span>
+    </div>
+  </div>
+}
+
+<app-modal [open]="editing() !== null" [title]="editing() === 'new' ? 'Add banner' : 'Edit banner'" maxWidthClass="max-w-xl" (closed)="editing.set(null)">
+  <form (ngSubmit)="save()" #bf="ngForm" class="space-y-4">
+    <div class="flex gap-4">
+      <div class="w-28 h-44 shrink-0 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center text-xs text-gray-400">
+        @if (form.imageUrl) { <img [src]="form.imageUrl" alt="Banner preview" class="w-full h-full object-cover" /> } @else { No image }
+      </div>
+      <div class="flex-1 space-y-3">
+        <div>
+          <label for="pb-image" class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+          <input id="pb-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" (change)="upload($event)" class="text-sm" />
+          <p class="mt-1 text-xs text-gray-500">{{ uploading() ? 'Uploading...' : 'PNG, JPEG, WEBP or GIF, up to 5 MB.' }}</p>
+        </div>
+        <div>
+          <label for="pb-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <input id="pb-title" name="title" [(ngModel)]="form.title" required maxlength="120" placeholder="e.g. Admissions 2027 now open"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          <p class="mt-1 text-xs text-gray-500">Read out to people using screen readers.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label for="pb-link" class="block text-sm font-medium text-gray-700 mb-1">Link (optional)</label>
+      <input id="pb-link" name="link" type="url" [(ngModel)]="form.linkUrl" placeholder="https://..."
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label for="pb-side" class="block text-sm font-medium text-gray-700 mb-1">Side</label>
+        <select id="pb-side" name="side" [(ngModel)]="form.side" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
+          <option value="Left">Left</option>
+          <option value="Right">Right</option>
+        </select>
+      </div>
+      <div>
+        <label for="pb-start" class="block text-sm font-medium text-gray-700 mb-1">From</label>
+        <input id="pb-start" name="startsOn" type="date" [(ngModel)]="form.startsOn" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+      </div>
+      <div>
+        <label for="pb-end" class="block text-sm font-medium text-gray-700 mb-1">Until</label>
+        <input id="pb-end" name="endsOn" type="date" [(ngModel)]="form.endsOn" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+      </div>
+    </div>
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+      <input type="checkbox" name="active" [(ngModel)]="form.isActive" /> Show it
+    </label>
+    @if (formError()) {
+      <p class="text-sm text-red-700" role="alert">{{ formError() }}</p>
+    }
+    <div class="flex gap-2">
+      <button type="submit" [disabled]="bf.invalid || !form.imageUrl || saving() || uploading()"
+        class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+        {{ saving() ? 'Saving...' : 'Save' }}
+      </button>
+      <button type="button" (click)="editing.set(null)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+    </div>
+  </form>
+</app-modal>
+
+<app-modal [open]="deleting() !== null" title="Delete banner" (closed)="deleting.set(null)">
+  @if (deleting(); as b) {
+    <p class="text-sm text-gray-700 mb-4">Delete "{{ b.title }}"? It disappears from the student portal at once.</p>
+    <div class="flex gap-2">
+      <button type="button" (click)="confirmDelete()" class="px-4 py-2 rounded-md bg-red-700 text-white text-sm font-medium hover:bg-red-800 cursor-pointer">Delete</button>
+      <button type="button" (click)="deleting.set(null)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+    </div>
+  }
+</app-modal>

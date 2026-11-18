@@ -1,0 +1,78 @@
+<div class="min-h-dvh flex flex-col bg-[#F7F5F0] text-[#15223B]">
+  <header class="bg-[#15223B] text-[#F7F5F0]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="flex items-center gap-3 min-w-0">
+        @if (institution()?.logoUrl; as logo) {
+          <img [src]="logo" [alt]="institution()!.name + ' logo'" class="w-10 h-10 rounded-lg bg-white object-contain p-1 shrink-0" />
+        } @else {
+          <a routerLink="/" class="w-9 h-9 rounded-full bg-[#7a2331] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1.5px_#dcae4a]" aria-label="Certyfi home">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" class="w-4 h-4" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </a>
+        }
+        <div class="min-w-0">
+          <p class="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#E8A765]">Student portal</p>
+          <p class="text-base font-semibold truncate">{{ institution()?.name ?? 'Certyfi' }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <ng-content select="[actions]"></ng-content>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 grid gap-6" [class]="hasBanners() ? 'lg:grid-cols-[225px_minmax(0,1fr)_225px] xl:grid-cols-[265px_minmax(0,1fr)_265px]' : ''">
+    @if (hasBanners()) {
+      <aside class="hidden lg:flex flex-col gap-4 pr-6 border-r border-[#D5CFC2]" aria-label="From your institution">
+        <p class="text-[11px] font-semibold tracking-[0.14em] uppercase text-gray-500">From {{ institution()?.name ?? 'your institution' }}</p>
+        @for (b of left(); track b.id) {
+          <ng-container *ngTemplateOutlet="banner; context: { $implicit: b }"></ng-container>
+        }
+      </aside>
+    }
+
+    <main class="min-w-0" [class.max-w-md]="narrow" [class.w-full]="narrow" [class.mx-auto]="narrow">
+      <ng-content></ng-content>
+    </main>
+
+    @if (hasBanners()) {
+      <aside class="hidden lg:flex flex-col gap-4 pl-6 border-l border-[#D5CFC2]" aria-label="From your institution">
+        <p class="text-[11px] font-semibold tracking-[0.14em] uppercase text-gray-500">From {{ institution()?.name ?? 'your institution' }}</p>
+        @for (b of right(); track b.id) {
+          <ng-container *ngTemplateOutlet="banner; context: { $implicit: b }"></ng-container>
+        }
+      </aside>
+      <!-- Narrow screens: all banners below the page. -->
+      <section class="lg:hidden grid grid-cols-2 gap-3 pt-6 border-t border-[#D5CFC2]" aria-label="From your institution">
+        <p class="col-span-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-gray-500">From {{ institution()?.name ?? 'your institution' }}</p>
+        @for (b of left().concat(right()); track b.id) {
+          <ng-container *ngTemplateOutlet="banner; context: { $implicit: b }"></ng-container>
+        }
+      </section>
+    }
+  </div>
+
+  <footer class="text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap justify-between gap-2">
+      <span>Certificates issued with <a routerLink="/" class="underline underline-offset-2 hover:text-gray-800">Certyfi</a> by Ahamsys</span>
+      <span class="flex gap-4">
+        <a routerLink="/help/students" class="hover:text-gray-800">Help</a>
+        <a routerLink="/verify" class="hover:text-gray-800">Verify a certificate</a>
+      </span>
+    </div>
+  </footer>
+</div>
+
+<ng-template #banner let-b>
+  @if (b.linkUrl) {
+    <a [href]="b.linkUrl" target="_blank" rel="noopener noreferrer" (click)="clicked(b)"
+      class="block rounded-xl overflow-hidden ring-1 ring-black/5 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <img [src]="b.imageUrl" [alt]="b.title" class="w-full h-auto block" loading="lazy" />
+    </a>
+  } @else {
+    <div class="rounded-xl overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
+      <img [src]="b.imageUrl" [alt]="b.title" class="w-full h-auto block" loading="lazy" />
+    </div>
+  }
+</ng-template>

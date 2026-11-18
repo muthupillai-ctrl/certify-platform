@@ -1,0 +1,411 @@
+<div class="max-w-6xl flex flex-col gap-5">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-900">Import paper certificates</h1>
+      <p class="mt-1 text-sm text-gray-600 max-w-3xl">
+        Turn certificates you issued on paper into digital, verifiable ones from a spreadsheet. Each keeps its original paper date and number.
+        A second person approves every import before anything is issued.
+      </p>
+      @if (isAdminOnly()) {
+        <p class="mt-2 text-sm text-gray-600 max-w-3xl">
+          Registrars start imports. When an import's template needs final approval, you give it here after an approver has approved the import.
+        </p>
+      }
+    </div>
+    @if (canImport() && !wizardOpen()) {
+      <button type="button" (click)="openWizard()" class="px-4 py-2 rounded-lg bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 cursor-pointer">New import</button>
+    }
+  </div>
+
+  @if (message()) {
+    <p class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-lg px-3 py-2" role="status">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2" role="alert">{{ error() }}</p>
+  }
+
+  <!-- ================= Wizard ================= -->
+  @if (wizardOpen()) {
+    <section class="bg-white border border-gray-200 rounded-xl" aria-labelledby="wizard-heading">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
+        <h2 id="wizard-heading" class="text-sm font-semibold text-gray-900">New import</h2>
+        <ol class="flex items-center gap-1 text-xs text-gray-500" aria-label="Steps">
+          @for (s of [['upload', '1 Upload'], ['map', '2 Match columns'], ['check', '3 Check'], ['importing', '4 Import']]; track s[0]) {
+            <li class="px-2 py-0.5 rounded-full" [class.bg-[#0f172a]]="step() === s[0] || (s[0] === 'importing' && step() === 'done')"
+              [class.text-white]="step() === s[0] || (s[0] === 'importing' && step() === 'done')">{{ s[1] }}</li>
+          }
+        </ol>
+        @if (step() !== 'importing') {
+          <button type="button" (click)="closeWizard()" class="text-sm text-gray-600 underline hover:text-gray-900 cursor-pointer">Close</button>
+        }
+      </div>
+
+      <div class="p-5">
+        @if (wizardError()) {
+          <p class="mb-4 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2" role="alert">{{ wizardError() }}</p>
+        }
+
+        @switch (step()) {
+          <!-- 1. Upload -->
+          @case ('upload') {
+            <label for="tpl" class="block text-sm font-medium text-gray-700">Certificate template for the digital versions</label>
+            <select id="tpl" [ngModel]="templateId" (ngModelChange)="setTemplate($event)" class="mt-1 w-full max-w-md px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
+              <option value="" disabled>Choose a template</option>
+              @for (t of templates(); track t.id) {
+                <option [value]="t.id">{{ t.name }}</option>
+              }
+            </select>
+            @if (templateId) {
+              <p class="mt-2 text-xs text-gray-600">
+                Not sure how to lay out the spreadsheet?
+                <button type="button" (click)="downloadSample()" class="underline text-gray-900 cursor-pointer">Download a sample with the right columns</button>.
+              </p>
+              <label class="mt-5 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-300 rounded-xl px-6 py-10 text-center cursor-pointer hover:bg-gray-50">
+                <span class="text-sm font-medium text-gray-900">{{ parsing() ? 'Reading the file…' : 'Choose the spreadsheet' }}</span>
+                <span class="text-xs text-gray-500">Excel (.xlsx) or CSV, up to 10,000 certificates and 5 MB. The first row must be the column headings.</span>
+                <input type="file" class="sr-only" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="onFile($event)" [disabled]="parsing()" />
+              </label>
+            }
+          }
+
+          <!-- 2. Map columns -->
+          @case ('map') {
+            @if (sheet(); as s) {
+              <p class="text-sm text-gray-700">
+                <span class="font-medium">{{ s.fileName }}</span>: {{ s.rows.length | number }} rows, {{ s.headers.length }} columns.
+                @if (s.truncated) { <span class="text-red-700">Only the first 10,000 rows were read; split the file and import the rest separately.</span> }
+                Match each item to a column (we guessed from the headings).
+              </p>
+
+              <div class="mt-4 grid gap-x-6 gap-y-3 md:grid-cols-2 text-sm">
+                @for (item of [
+                  { key: 'name', label: 'Recipient name', required: true },
+                  { key: 'email', label: 'Recipient email', required: false },
+                  { key: 'date', label: 'Original issue date (on the paper)', required: true },
+                  { key: 'number', label: 'Paper certificate number', required: false },
+                  { key: 'expires', label: 'Expires on', required: false }
+                ]; track item.key) {
+                  <label class="flex flex-col gap-1">
+                    <span class="text-gray-700">{{ item.label }}@if (item.required) { <span class="text-red-700"> *</span> }</span>
+                    <select [(ngModel)]="$any(mapping)[item.key]" class="px-2.5 py-1.5 border border-gray-300 rounded-md bg-white">
+                      <option [ngValue]="null">{{ item.required ? 'Choose a column' : '(not in the file)' }}</option>
+                      @for (h of s.headers; track $index) {
+                        <option [ngValue]="$index">{{ h || 'Column ' + ($index + 1) }}</option>
+                      }
+                    </select>
+                  </label>
+                }
+                <fieldset class="flex flex-col gap-1">
+                  <legend class="text-gray-700">Achievement <span class="text-red-700">*</span></legend>
+                  <label class="flex items-center gap-2"><input type="radio" name="achievementMode" value="fixed" [(ngModel)]="achievementMode" /> Same for every row:</label>
+                  @if (achievementMode === 'fixed') {
+                    <input [(ngModel)]="fixedTitle" placeholder="e.g. Fire Safety Level 1" class="ml-6 px-2.5 py-1.5 border border-gray-300 rounded-md" />
+                  }
+                  <label class="flex items-center gap-2"><input type="radio" name="achievementMode" value="column" [(ngModel)]="achievementMode" /> From a column:</label>
+                  @if (achievementMode === 'column') {
+                    <select [(ngModel)]="mapping.achievement" class="ml-6 px-2.5 py-1.5 border border-gray-300 rounded-md bg-white">
+                      <option [ngValue]="null">Choose a column</option>
+                      @for (h of s.headers; track $index) { <option [ngValue]="$index">{{ h || 'Column ' + ($index + 1) }}</option> }
+                    </select>
+                  }
+                </fieldset>
+                <label class="flex flex-col gap-1">
+                  <span class="text-gray-700">How dates are written in the file</span>
+                  <select [(ngModel)]="dateFormat" class="px-2.5 py-1.5 border border-gray-300 rounded-md bg-white">
+                    <option value="DMY">Day/Month/Year (12/03/2015)</option>
+                    <option value="MDY">Month/Day/Year (03/12/2015)</option>
+                    <option value="YMD">Year-Month-Day (2015-03-12)</option>
+                  </select>
+                  <span class="text-xs text-gray-500">Excel date cells and 2015-03-12 are always read correctly.</span>
+                </label>
+                @for (f of templateFields(); track f.key) {
+                  <label class="flex flex-col gap-1">
+                    <span class="text-gray-700">{{ f.label }} <span class="text-xs text-gray-400">(template field)</span></span>
+                    <select [(ngModel)]="mapping.fields[f.key]" class="px-2.5 py-1.5 border border-gray-300 rounded-md bg-white">
+                      <option [ngValue]="null">(not in the file)</option>
+                      @for (h of s.headers; track $index) { <option [ngValue]="$index">{{ h || 'Column ' + ($index + 1) }}</option> }
+                    </select>
+                  </label>
+                }
+              </div>
+
+              <h3 class="mt-6 text-xs font-medium text-gray-500">First rows, as they will be read</h3>
+              <div class="mt-1 overflow-x-auto border border-gray-100 rounded-md">
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-50 text-left text-gray-500">
+                    <tr><th class="px-2 py-1.5">Name</th><th class="px-2 py-1.5">Email</th><th class="px-2 py-1.5">Achievement</th><th class="px-2 py-1.5">Paper date</th><th class="px-2 py-1.5">Paper no.</th>
+                      @for (f of templateFields(); track f.key) { <th class="px-2 py-1.5">{{ f.label }}</th> }</tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    @for (r of previewRows(); track $index) {
+                      <tr>
+                        <td class="px-2 py-1.5">{{ cellOf(r, mapping.name) }}</td>
+                        <td class="px-2 py-1.5">{{ cellOf(r, mapping.email) }}</td>
+                        <td class="px-2 py-1.5">{{ achievementMode === 'fixed' ? fixedTitle : cellOf(r, mapping.achievement) }}</td>
+                        <td class="px-2 py-1.5">{{ cellOf(r, mapping.date) }}</td>
+                        <td class="px-2 py-1.5">{{ cellOf(r, mapping.number) }}</td>
+                        @for (f of templateFields(); track f.key) { <td class="px-2 py-1.5">{{ cellOf(r, mapping.fields[f.key]) }}</td> }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-5 flex justify-between">
+                <button type="button" (click)="step.set('upload')" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Back</button>
+                <button type="button" (click)="runCheck()" [disabled]="!mappingReady() || checking()"
+                  class="px-4 py-1.5 rounded-md bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-40 cursor-pointer">
+                  {{ checking() ? 'Checking…' : 'Check ' + (s.rows.length | number) + ' rows' }}
+                </button>
+              </div>
+            }
+          }
+
+          <!-- 3. Check -->
+          @case ('check') {
+            @if (check(); as c) {
+              <div class="grid gap-3 sm:grid-cols-3">
+                <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3"><div class="text-2xl font-semibold text-green-900">{{ c.ready | number }}</div><div class="text-sm text-green-900">ready to import</div></div>
+                <div class="rounded-lg border px-4 py-3" [class.border-red-200]="c.withErrors > 0" [class.bg-red-50]="c.withErrors > 0" [class.border-gray-200]="c.withErrors === 0">
+                  <div class="text-2xl font-semibold" [class.text-red-900]="c.withErrors > 0">{{ c.withErrors | number }}</div><div class="text-sm">with problems (left out)</div></div>
+                <div class="rounded-lg border px-4 py-3" [class.border-amber-200]="c.likelyDuplicates > 0" [class.bg-amber-50]="c.likelyDuplicates > 0" [class.border-gray-200]="c.likelyDuplicates === 0">
+                  <div class="text-2xl font-semibold">{{ c.likelyDuplicates | number }}</div><div class="text-sm">look already imported</div></div>
+              </div>
+
+              @if (problemRows().length > 0) {
+                <div class="mt-5 flex items-baseline justify-between gap-2">
+                  <h3 class="text-sm font-semibold text-gray-900">Rows with problems</h3>
+                  <button type="button" (click)="downloadProblems()" class="text-sm underline text-gray-800 cursor-pointer">Download these rows to fix (CSV)</button>
+                </div>
+                <div class="mt-2 max-h-72 overflow-y-auto border border-gray-100 rounded-md">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-left text-xs text-gray-500 sticky top-0"><tr><th class="px-3 py-1.5">File row</th><th class="px-3 py-1.5">Name</th><th class="px-3 py-1.5">Problem</th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                      @for (p of problemRows(); track p.row) {
+                        <tr class="align-top"><td class="px-3 py-1.5 tabular-nums">{{ p.row + 2 }}</td><td class="px-3 py-1.5">{{ rowName(p.row) }}</td><td class="px-3 py-1.5 text-red-800">{{ p.errors.join(' ') }}</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+              @if (warningRows().length > 0) {
+                <details class="mt-4 text-sm">
+                  <summary class="cursor-pointer text-gray-800">{{ warningRows().length }} rows with notes (they will be imported)</summary>
+                  <ul class="mt-2 max-h-48 overflow-y-auto text-xs text-gray-700 space-y-1">
+                    @for (p of warningRows(); track p.row) { <li>Row {{ p.row + 2 }} ({{ rowName(p.row) }}): {{ p.warnings.join(' ') }}</li> }
+                  </ul>
+                </details>
+              }
+              @if (c.likelyDuplicates > 0) {
+                <label class="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" [(ngModel)]="skipDuplicates" /> Leave out the {{ c.likelyDuplicates }} rows that look already imported</label>
+              }
+
+              <p class="mt-5 text-sm text-gray-700">
+                Importing creates <strong>{{ toImportCount() | number }}</strong> certificates waiting for approval. Nothing is issued or visible to anyone
+                until a different approver approves the import.
+              </p>
+              <div class="mt-3 flex justify-between">
+                <button type="button" (click)="step.set('map')" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Back to columns</button>
+                <button type="button" (click)="runImport()" [disabled]="toImportCount() === 0"
+                  class="px-4 py-1.5 rounded-md bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-40 cursor-pointer">
+                  Import {{ toImportCount() | number }} certificates
+                </button>
+              </div>
+            }
+          }
+
+          <!-- 4. Importing / done -->
+          @case ('importing') {
+            @let p = importProgress();
+            <p class="text-sm text-gray-800">Importing… {{ p.done | number }} of {{ p.total | number }} rows. Please keep this page open.</p>
+            <div class="mt-3 h-2 bg-gray-100 rounded-full" role="progressbar" [attr.aria-valuenow]="p.done" [attr.aria-valuemax]="p.total">
+              <div class="h-full rounded-full bg-[#7a2331] transition-all" [style.width.%]="p.total ? (p.done / p.total) * 100 : 0"></div>
+            </div>
+          }
+          @case ('done') {
+            @if (importResult(); as r) {
+              <p class="text-base font-semibold text-gray-900">{{ r.imported | number }} certificates imported{{ r.batch?.status === 'PendingApproval' ? ' and sent for approval' : '' }}.</p>
+              @if (r.skipped > 0) {
+                <p class="mt-1 text-sm text-gray-700">{{ r.skipped | number }} rows were left out:</p>
+                <ul class="mt-1 max-h-40 overflow-y-auto text-xs text-gray-700 space-y-0.5">
+                  @for (p of r.problems; track p.row) { <li>Row {{ p.row + 2 }} ({{ rowName(p.row) }}): {{ p.errors.join(' ') }}</li> }
+                </ul>
+              }
+              @if (r.batch?.status === 'PendingApproval') {
+                <p class="mt-3 text-sm text-gray-700">An approver (someone other than you) now reviews and approves the import. Until then nothing is issued.</p>
+              }
+              <button type="button" (click)="closeWizard()" class="mt-4 px-4 py-1.5 rounded-md bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 cursor-pointer">Done</button>
+            }
+          }
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ================= Imports ================= -->
+  <section class="bg-white border border-gray-200 rounded-xl" aria-labelledby="imports-heading">
+    <div class="px-4 py-3 border-b border-gray-100"><h2 id="imports-heading" class="text-sm font-semibold text-gray-900">Imports</h2></div>
+    @if (loadingBatches()) {
+      <p class="px-4 py-4 text-sm text-gray-500">Loading…</p>
+    } @else if (batches().length === 0) {
+      <p class="px-4 py-4 text-sm text-gray-500">No imports yet.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500">
+            <tr><th class="px-4 py-2">File</th><th class="px-4 py-2">Certificates</th><th class="px-4 py-2">Paper dates</th><th class="px-4 py-2">Imported by</th><th class="px-4 py-2">Status</th><th class="px-4 py-2"></th></tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (b of batches(); track b.id) {
+              <tr [class.bg-[#fdf2f4]]="detail()?.batch?.id === b.id">
+                <td class="px-4 py-2"><div class="text-gray-900">{{ b.fileName }}</div><div class="text-xs text-gray-500">{{ b.templateName }}</div></td>
+                <td class="px-4 py-2 tabular-nums">{{ b.pending + b.issued + b.rejected | number }}</td>
+                <td class="px-4 py-2 text-gray-700 whitespace-nowrap">{{ b.earliestPaperDate ? (b.earliestPaperDate | date: 'y') : '' }}{{ b.latestPaperDate && b.latestPaperDate.slice(0, 4) !== b.earliestPaperDate?.slice(0, 4) ? '–' + (b.latestPaperDate | date: 'y') : '' }}</td>
+                <td class="px-4 py-2 text-gray-700">{{ b.createdByName }}<div class="text-xs text-gray-500">{{ b.createdAt | date: 'd MMM y, HH:mm' }}</div></td>
+                <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="statusClasses(b.status)">{{ statusLabel(b.status) }}</span></td>
+                <td class="px-4 py-2 text-right">
+                  <button type="button" (click)="openDetail(b.id)" class="px-3 py-1 rounded-md border text-sm cursor-pointer"
+                    [class.bg-red-700]="b.canApprove && b.status === 'PendingApproval'" [class.text-white]="b.canApprove && b.status === 'PendingApproval'"
+                    [class.border-red-700]="b.canApprove && b.status === 'PendingApproval'" [class.border-gray-300]="!(b.canApprove && b.status === 'PendingApproval')">
+                    {{ b.canApprove && b.status === 'PendingApproval' ? 'Review' : 'Open' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- ================= One import ================= -->
+  @if (detail(); as d) {
+    @let b = d.batch;
+    <section class="bg-white border border-gray-200 rounded-xl p-5" aria-labelledby="detail-heading">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="detail-heading" class="text-base font-semibold text-gray-900">{{ b.fileName }}</h2>
+          <p class="text-sm text-gray-600">{{ b.templateName }} · imported by {{ b.createdByName }} on {{ b.createdAt | date: 'd MMM y, HH:mm' }}</p>
+        </div>
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium" [class]="statusClasses(b.status)">{{ statusLabel(b.status) }}</span>
+      </div>
+
+      <dl class="mt-4 grid gap-3 sm:grid-cols-4 text-sm">
+        <div><dt class="text-xs text-gray-500">Waiting</dt><dd class="text-lg font-semibold">{{ b.pending | number }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Issued</dt><dd class="text-lg font-semibold">{{ b.issued | number }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Rejected</dt><dd class="text-lg font-semibold">{{ b.rejected | number }}</dd></div>
+        <div><dt class="text-xs text-gray-500">Paper dates</dt><dd>{{ b.earliestPaperDate | date: 'd MMM y' }} – {{ b.latestPaperDate | date: 'd MMM y' }}</dd></div>
+      </dl>
+      @if (b.decidedByName) {
+        <p class="mt-2 text-sm text-gray-700">{{ b.status === 'Withdrawn' ? 'Withdrawn' : 'Decided' }} by {{ b.decidedByName }} on {{ b.decidedAt | date: 'd MMM y, HH:mm' }}{{ b.decisionNote ? ': ' + b.decisionNote : '' }}</p>
+      }
+
+      <div class="mt-4 grid gap-5 lg:grid-cols-[1fr_2fr]">
+        <div>
+          <h3 class="text-xs font-medium text-gray-500">By achievement</h3>
+          <ul class="mt-1 text-sm divide-y divide-gray-100">
+            @for (a of d.byAchievement; track a.name) { <li class="py-1 flex justify-between gap-2"><span>{{ a.name }}</span><span class="tabular-nums">{{ a.count | number }}</span></li> }
+          </ul>
+        </div>
+        <div>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-xs font-medium text-gray-500">First {{ d.sample.length }} certificates</h3>
+            <a [routerLink]="'/admin/certificates'" [queryParams]="{ batch: b.id }" class="text-xs underline text-gray-800">See all {{ b.pending + b.issued + b.rejected | number }} in Certificates</a>
+          </div>
+          <div class="mt-1 overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead class="text-left text-gray-500 border-b border-gray-200"><tr><th class="py-1 pr-2">Name</th><th class="py-1 pr-2">Achievement</th><th class="py-1 pr-2">Paper date</th><th class="py-1 pr-2">Paper no.</th><th class="py-1">Email</th></tr></thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (s of d.sample; track s.id) {
+                  <tr><td class="py-1 pr-2">{{ s.recipientName }}</td><td class="py-1 pr-2">{{ s.achievementTitle }}</td><td class="py-1 pr-2 whitespace-nowrap">{{ s.originalIssueDate | date: 'd MMM y' }}</td><td class="py-1 pr-2">{{ s.legacyCertificateNumber }}</td><td class="py-1">{{ s.recipientEmail || '—' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      @if (deciding() === null) {
+        <div class="mt-5 flex flex-wrap gap-2">
+          @if (b.canFinalApprove) {
+            <button type="button" (click)="startDecision('approve')" class="px-4 py-1.5 rounded-md bg-red-700 text-white text-sm font-medium hover:bg-red-800 cursor-pointer">
+              {{ b.status === 'FinalApproving' ? 'Continue final approval' : 'Give final approval and issue ' + (b.pending | number) + ' certificates…' }}
+            </button>
+            @if (b.status === 'PendingFinalApproval') {
+              <button type="button" (click)="startDecision('reject')" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Reject import…</button>
+            }
+          }
+          @if (b.status === 'PendingFinalApproval' && !b.canFinalApprove) {
+            <p class="text-sm text-gray-500 self-center">Approved; waiting for final approval by an institution admin who didn't import or first-approve it.</p>
+          }
+          @if (b.canApprove) {
+            <button type="button" (click)="startDecision('approve')" class="px-4 py-1.5 rounded-md bg-red-700 text-white text-sm font-medium hover:bg-red-800 cursor-pointer">
+              {{ b.status === 'Approving' ? 'Continue approving' : 'Approve ' + (b.pending | number) + ' certificates…' }}
+            </button>
+            @if (b.status === 'PendingApproval') {
+              <button type="button" (click)="startDecision('reject')" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Reject import…</button>
+            }
+          }
+          @if (b.canContinueImport) {
+            <button type="button" (click)="finishInterrupted(b)" class="px-3 py-1.5 rounded-md bg-[#0f172a] text-white text-sm hover:bg-gray-800 cursor-pointer">Send the {{ b.pending | number }} imported for approval</button>
+          }
+          @if (b.canWithdraw) {
+            <button type="button" (click)="startDecision('withdraw')" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Withdraw import…</button>
+          }
+          @if (b.status === 'PendingApproval' && !b.canApprove && !b.canWithdraw) {
+            <p class="text-sm text-gray-500">Waiting for an approver.</p>
+          }
+          @if (b.status === 'PendingApproval' && b.canWithdraw) {
+            <p class="text-sm text-gray-500 self-center">Your import: a different approver must approve it.</p>
+          }
+        </div>
+      } @else {
+        <div class="mt-5 border-t border-gray-100 pt-4 max-w-xl">
+          @switch (deciding()) {
+            @case ('approve') {
+              <p class="text-sm text-gray-800">
+                @if (b.status === 'PendingApproval' || b.status === 'Approving') {
+                  This approves <strong>{{ b.pending | number }}</strong> certificates. If their template needs final approval, an institution admin then gives it;
+                  otherwise they're signed and issued now, publicly verifiable with their original paper date. Check the sample above first.
+                } @else {
+                  This gives final approval to <strong>{{ b.pending | number }}</strong> certificates, which are signed and issued now: publicly verifiable,
+                  with their original paper date. Check the sample above first.
+                }
+              </p>
+              <label for="confirm-count" class="mt-3 block text-sm font-medium text-gray-700">Type the number of certificates ({{ b.pending }}) to confirm</label>
+              <input id="confirm-count" [(ngModel)]="confirmCount" inputmode="numeric" autocomplete="off" [disabled]="working() || b.status === 'Approving' || b.status === 'FinalApproving'"
+                class="mt-1 w-40 px-3 py-2 border border-gray-300 rounded-md text-sm" />
+            }
+            @case ('reject') {
+              <p class="text-sm text-gray-800">None of the {{ b.pending | number }} certificates will be issued. The importer can fix the file and import again.</p>
+              <label for="reject-note" class="mt-3 block text-sm font-medium text-gray-700">Why?</label>
+              <textarea id="reject-note" [(ngModel)]="rejectNote" rows="2" maxlength="1000" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></textarea>
+            }
+            @case ('withdraw') {
+              <p class="text-sm text-gray-800">Withdraw your import? None of its {{ b.pending | number }} certificates will be issued.</p>
+            }
+          }
+          @if (progress(); as p) {
+            <div class="mt-3 h-2 bg-gray-100 rounded-full" role="progressbar" [attr.aria-valuenow]="p.done" [attr.aria-valuemax]="p.total">
+              <div class="h-full rounded-full bg-[#7a2331] transition-all" [style.width.%]="p.total ? (p.done / p.total) * 100 : 0"></div>
+            </div>
+            <p class="mt-1 text-xs text-gray-600">{{ p.done | number }} of {{ p.total | number }}… please keep this page open.</p>
+          }
+          @if (decideError()) {
+            <p class="mt-2 text-sm text-red-700" role="alert">{{ decideError() }}</p>
+          }
+          <div class="mt-3 flex gap-2">
+            <button type="button" (click)="decide()"
+              [disabled]="working() || (deciding() === 'approve' && (b.status === 'PendingApproval' || b.status === 'PendingFinalApproval') && confirmCount.trim() !== '' + b.pending) || (deciding() === 'reject' && !rejectNote.trim())"
+              class="px-4 py-1.5 rounded-md text-white text-sm font-medium disabled:opacity-40 cursor-pointer"
+              [class.bg-red-700]="deciding() === 'approve'" [class.bg-[#0f172a]]="deciding() !== 'approve'">
+              {{ working() ? 'Working…' : deciding() === 'approve' ? 'Approve and issue' : deciding() === 'reject' ? 'Reject import' : 'Withdraw import' }}
+            </button>
+            <button type="button" (click)="deciding.set(null)" [disabled]="working()" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>

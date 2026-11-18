@@ -1,0 +1,187 @@
+<div class="min-h-dvh bg-[#F7F5F0] text-[#15223B]">
+  <!-- Top bar -->
+  <header class="bg-[#15223B] text-[#F7F5F0]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <a routerLink="/" class="flex items-center gap-2.5">
+        <span class="w-8 h-8 rounded-full bg-[#7a2331] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1.5px_#dcae4a]">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" class="w-[15px] h-[15px]" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </span>
+        <span class="text-[17px] font-semibold">Certyfi</span>
+        <span class="hidden sm:inline text-xs text-[#9FB0C9]">by Ahamsys</span>
+      </a>
+      <nav class="flex flex-wrap items-center gap-1 sm:gap-2 text-sm" aria-label="Main">
+        <a routerLink="/student/login" class="px-3 py-1.5 rounded-lg ring-1 ring-inset ring-white/25 text-[#F7F5F0] hover:bg-white/10">Student login</a>
+        <a href="#contact" class="px-3 py-1.5 text-[#C9D3E3] hover:text-white">Contact</a>
+        @if (auth.currentUser() && !auth.hasRole('SuperAdmin')) {
+          <a routerLink="/admin" class="px-4 py-1.5 rounded-lg bg-[#D97A2B] font-semibold text-[#15223B] hover:bg-[#E8A765]">Go to the app</a>
+        } @else {
+          <a routerLink="/login" class="px-4 py-1.5 rounded-lg bg-[#D97A2B] font-semibold text-[#15223B] hover:bg-[#E8A765]">Institution login</a>
+        }
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="bg-[#15223B] text-[#F7F5F0]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-20 sm:pt-20 sm:pb-28 grid gap-12 lg:grid-cols-[1.2fr_1fr] items-center">
+      <div>
+        <p class="text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-[#E8A765]">Digital certificates</p>
+        <h1 class="mt-4 font-serif text-4xl sm:text-6xl font-semibold leading-[1.05]">Certificates anyone can verify in seconds.</h1>
+        <p class="mt-6 text-lg sm:text-xl leading-relaxed text-[#C9D3E3] max-w-xl">
+          Institutions issue tamper-proof certificates in minutes. Employers, universities and embassies check them
+          by QR code, certificate code or file, with no account and no phone calls.
+        </p>
+        <div class="mt-9 flex flex-wrap gap-3">
+          <a routerLink="/verify" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#D97A2B] text-[#15223B] font-semibold hover:bg-[#E8A765]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+            Verify a certificate
+          </a>
+          <a href="mailto:info@ahamsys.com?subject=Certyfi%20pilot" class="px-5 py-3 rounded-lg ring-1 ring-inset ring-white/30 font-semibold hover:bg-white/10">Talk to us about a pilot</a>
+        </div>
+        <a routerLink="/presentation" class="mt-6 inline-block text-sm text-[#C9D3E3] underline underline-offset-4 hover:text-white">See the presentation →</a>
+      </div>
+      <!-- What a check shows -->
+      <div class="bg-[#F7F5F0] text-[#15223B] rounded-2xl p-6 sm:p-8 shadow-2xl ring-1 ring-black/5" aria-label="Example of a verification result">
+        <div class="flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+          <span class="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center text-lg font-bold" aria-hidden="true">✓</span>
+          <div>
+            <p class="font-semibold text-green-900">Valid certificate</p>
+            <p class="text-sm text-green-800">Issued by Example Institute of Technology</p>
+          </div>
+        </div>
+        <dl class="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+          <dt class="text-gray-500">Awarded to</dt><dd class="font-medium">Adaeze Okonkwo</dd>
+          <dt class="text-gray-500">Achievement</dt><dd class="font-medium">BSc Computer Science</dd>
+          <dt class="text-gray-500">Issued</dt><dd class="font-medium">20 July 2026</dd>
+          <dt class="text-gray-500">Certificate code</dt><dd class="font-mono">K7QM-3XPD-9TWA</dd>
+        </dl>
+        <ul class="mt-6 space-y-2 text-sm text-gray-700">
+          <li class="flex gap-2"><span class="text-green-700" aria-hidden="true">✓</span> Signed with the institution's own key</li>
+          <li class="flex gap-2"><span class="text-green-700" aria-hidden="true">✓</span> Recorded in a tamper-evident audit trail</li>
+          <li class="flex gap-2"><span class="text-green-700" aria-hidden="true">✓</span> Timestamped on Bitcoin</li>
+        </ul>
+        <p class="mt-5 text-xs text-gray-500">Example with demo data</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who it's for -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <h2 class="font-serif text-3xl sm:text-4xl font-semibold">One certificate, three kinds of people</h2>
+    <div class="mt-10 grid gap-5 md:grid-cols-3">
+      <article class="bg-white rounded-2xl border border-[#DCE2EA] p-7">
+        <p class="text-xs font-semibold tracking-[0.15em] uppercase text-[#1D5FD1]">Institutions</p>
+        <h3 class="mt-2 text-xl font-semibold">Issue with confidence</h3>
+        <ul class="mt-4 space-y-2 text-[15px] text-gray-700 leading-relaxed">
+          <li>Design certificates and marks cards in your own style</li>
+          <li>Every certificate approved by a second person</li>
+          <li>Bring years of paper records online</li>
+          <li>Connect your LMS or student system</li>
+          <li>Reports ready for audits and accreditation</li>
+        </ul>
+        <a routerLink="/login" class="mt-6 inline-block text-sm font-semibold text-[#1D5FD1] hover:underline">Institution login →</a>
+      </article>
+      <article id="students" class="bg-white rounded-2xl border border-[#DCE2EA] p-7 scroll-mt-6">
+        <p class="text-xs font-semibold tracking-[0.15em] uppercase text-[#1D5FD1]">Students</p>
+        <h3 class="mt-2 text-xl font-semibold">Your certificates, always to hand</h3>
+        <ul class="mt-4 space-y-2 text-[15px] text-gray-700 leading-relaxed">
+          <li>Every certificate from your institution in one portal</li>
+          <li>An email at every step</li>
+          <li>Download, share a link or add to LinkedIn</li>
+        </ul>
+        <a routerLink="/student/login" class="mt-6 inline-block px-4 py-2 rounded-lg bg-[#15223B] text-white text-sm font-semibold hover:bg-[#1F3052]">Student login</a>
+        <form (ngSubmit)="studentSignIn()" class="mt-5">
+          <label for="lp-code" class="block text-sm font-medium text-gray-700">Or go straight to your institution: code</label>
+          <div class="mt-1.5 flex gap-2">
+            <input id="lp-code" name="code" [(ngModel)]="institutionCode" placeholder="e.g. acme-university" autocomplete="organization"
+              class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#15223B]" />
+            <button type="submit" [disabled]="!institutionCode.trim()"
+              class="px-4 py-2 rounded-md bg-[#15223B] text-white text-sm font-medium hover:bg-[#1F3052] disabled:opacity-40 cursor-pointer">Go</button>
+          </div>
+          <p class="mt-1.5 text-xs text-gray-500">It's in the emails your institution sends you.</p>
+        </form>
+      </article>
+      <article class="bg-white rounded-2xl border border-[#DCE2EA] p-7">
+        <p class="text-xs font-semibold tracking-[0.15em] uppercase text-[#1D5FD1]">Employers and verifiers</p>
+        <h3 class="mt-2 text-xl font-semibold">Check in seconds</h3>
+        <ul class="mt-4 space-y-2 text-[15px] text-gray-700 leading-relaxed">
+          <li>Scan the QR code with any phone camera</li>
+          <li>Or type the institution and certificate code</li>
+          <li>See at once if it's valid, suspended or revoked</li>
+          <li>No account, no app, no phone calls</li>
+        </ul>
+        <a routerLink="/verify" class="mt-6 inline-block text-sm font-semibold text-[#1D5FD1] hover:underline">Verify a certificate →</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="bg-[#E9EEF3]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+      <h2 class="font-serif text-3xl sm:text-4xl font-semibold">How it works</h2>
+      <ol class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        @for (step of steps; track step.title; let i = $index) {
+          <li class="bg-white rounded-2xl border border-[#CFD8E3] p-6">
+            <p class="text-3xl font-semibold" [class]="i === steps.length - 1 ? 'text-[#D97A2B]' : 'text-[#1D5FD1]'">{{ i + 1 }}</p>
+            <h3 class="mt-3 text-lg font-semibold">{{ step.title }}</h3>
+            <p class="mt-1 text-sm text-gray-600 leading-relaxed">{{ step.text }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- Trust -->
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <h2 class="font-serif text-3xl sm:text-4xl font-semibold max-w-3xl">Four independent layers stop a fake from passing</h2>
+    <div class="mt-10 grid gap-5 sm:grid-cols-2">
+      @for (layer of layers; track layer.title) {
+        <div class="bg-white rounded-2xl border border-[#DCE2EA] p-6">
+          <h3 class="text-lg font-semibold">{{ layer.title }}</h3>
+          <p class="mt-1 text-[15px] text-gray-700 leading-relaxed">{{ layer.text }}</p>
+        </div>
+      }
+    </div>
+    <p class="mt-6 text-sm text-gray-600 max-w-3xl">
+      Anyone can re-check a signature with free, standard tools such as OpenSSL, so the proof doesn't depend on trusting Certyfi.
+    </p>
+  </section>
+
+  <!-- Pilot / contact -->
+  <section id="contact" class="bg-[#15223B] text-[#F7F5F0] scroll-mt-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
+      <div>
+        <h2 class="font-serif text-3xl sm:text-4xl font-semibold">Free during the pilot phase</h2>
+        <p class="mt-4 text-lg text-[#C9D3E3] leading-relaxed">
+          We're onboarding our first institutions. Tell us about your certificates and we'll set you up.
+        </p>
+        <a routerLink="/presentation" class="mt-6 inline-block text-sm text-[#C9D3E3] underline underline-offset-4 hover:text-white">See the presentation →</a>
+      </div>
+      <div class="bg-[#1F3052] rounded-2xl p-7 space-y-3">
+        <p class="text-sm font-semibold text-[#E8A765]">Get in touch</p>
+        <a href="mailto:info@ahamsys.com?subject=Certyfi" class="block text-2xl font-semibold hover:underline">info&#64;ahamsys.com</a>
+        <a href="tel:+2347062891305" class="block text-xl hover:underline">+234 706 289 1305</a>
+        <a href="mailto:info@ahamsys.com?subject=Certyfi%20pilot" class="mt-3 inline-block px-5 py-3 rounded-lg bg-[#D97A2B] text-[#15223B] font-semibold hover:bg-[#E8A765]">Ask about a pilot</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-[#0B1222] text-[#9FB0C9] text-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-3">
+      <p>© {{ year }} Ahamsys · Certyfi</p>
+      <nav class="flex flex-wrap gap-4" aria-label="Footer">
+        <a routerLink="/verify" class="hover:text-white">Verify a certificate</a>
+        <a routerLink="/student/login" class="hover:text-white">Student login</a>
+        <a routerLink="/developers" class="hover:text-white">Developers (API)</a>
+        <a routerLink="/help" class="hover:text-white">Help</a>
+        <a routerLink="/login" class="hover:text-white">Institution login</a>
+        <a routerLink="/platform/login" class="hover:text-white">Platform login</a>
+        <a routerLink="/presentation" class="hover:text-white">Presentation</a>
+      </nav>
+    </div>
+  </footer>
+</div>

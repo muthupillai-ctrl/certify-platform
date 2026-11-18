@@ -1,0 +1,81 @@
+@if (canonicalHash && signature && signatureKeyId) {
+  <div class="border border-gray-200 rounded-lg p-4 bg-white">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-900">Cryptographic signature</h3>
+      <button
+        type="button"
+        (click)="verifySignature()"
+        [disabled]="state() === 'checking' || !publicKeyPem()"
+        class="text-xs px-3 py-1.5 rounded-md bg-gray-900 text-white font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+      >
+        {{ state() === 'checking' ? 'Verifying...' : 'Verify in this browser' }}
+      </button>
+    </div>
+
+    @switch (state()) {
+      @case ('valid') {
+        <p class="text-sm text-green-700 font-medium mb-3">✓ Signature is cryptographically valid — verified locally, independent of this server's own claim.</p>
+      }
+      @case ('invalid') {
+        <p class="text-sm text-red-700 font-medium mb-3">✗ Signature does NOT verify against this key. This credential may have been tampered with.</p>
+      }
+      @case ('error') {
+        <p class="text-sm text-gray-500 mb-3">Couldn't complete verification in this browser.</p>
+      }
+    }
+
+    <dl class="space-y-2 text-xs">
+      <div>
+        <dt class="text-gray-500">Signing key</dt>
+        <dd class="font-mono text-gray-900">{{ signatureKeyId }} @if (algorithm()) { <span class="text-gray-500">({{ algorithm() }})</span> }</dd>
+      </div>
+      <div>
+        <dt class="text-gray-500">Canonical hash (what was signed)</dt>
+        <dd class="font-mono text-gray-900 break-all">{{ canonicalHash }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-500">Signature</dt>
+        <dd class="font-mono text-gray-900 break-all">{{ signature }}</dd>
+      </div>
+    </dl>
+
+    @if (keyFetchError()) {
+      <p class="mt-3 text-xs text-red-600">{{ keyFetchError() }}</p>
+    } @else if (publicKeyPem()) {
+      <button type="button" (click)="togglePublicKey()" class="mt-3 text-xs text-gray-500 hover:text-gray-900 underline cursor-pointer">
+        {{ showPublicKey() ? 'Hide' : 'Show' }} public key
+      </button>
+      @if (showPublicKey()) {
+        <pre class="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-[10px] font-mono text-gray-700 whitespace-pre-wrap break-all">{{ publicKeyPem() }}</pre>
+      }
+    }
+
+    @if (openSslCommands(); as commands) {
+      <details class="mt-3 text-xs">
+        <summary class="cursor-pointer text-gray-600 hover:text-gray-900">Don't trust this page either: check it yourself with OpenSSL</summary>
+        <div class="mt-2 space-y-3 text-gray-600">
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <p>On macOS or Linux, paste this into a terminal:</p>
+              <button type="button" (click)="copyCommands()" class="px-2 py-1 rounded border border-gray-300 text-gray-800 hover:bg-gray-50 cursor-pointer">{{ copied() ? 'Copied' : 'Copy' }}</button>
+            </div>
+            <pre class="mt-1 p-2 bg-gray-900 text-gray-100 rounded text-[10px] font-mono whitespace-pre-wrap break-all">{{ commands }}</pre>
+          </div>
+          <div>
+            <p>On Windows (OpenSSL comes with Git for Windows), download the three files:</p>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+              <button type="button" (click)="download('key.pem')" class="px-2 py-1 rounded border border-gray-300 text-gray-800 hover:bg-gray-50 cursor-pointer font-mono">key.pem</button>
+              <button type="button" (click)="download('signature.der')" class="px-2 py-1 rounded border border-gray-300 text-gray-800 hover:bg-gray-50 cursor-pointer font-mono">signature.der</button>
+              <button type="button" (click)="download('fingerprint.txt')" class="px-2 py-1 rounded border border-gray-300 text-gray-800 hover:bg-gray-50 cursor-pointer font-mono">fingerprint.txt</button>
+            </div>
+            <p class="mt-1">then, in the folder you saved them to, run:</p>
+            <pre class="mt-1 p-2 bg-gray-900 text-gray-100 rounded text-[10px] font-mono whitespace-pre-wrap break-all">openssl dgst -sha256 -verify key.pem -signature signature.der fingerprint.txt</pre>
+          </div>
+          <p><span class="font-mono text-green-700">Verified OK</span> means the institution's key signed this record and it hasn't changed. Any other answer means it doesn't match.</p>
+        </div>
+      </details>
+    }
+  </div>
+} @else {
+  <p class="text-sm text-gray-500">Not yet signed — signing happens once this credential is approved.</p>
+}

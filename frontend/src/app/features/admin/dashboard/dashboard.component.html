@@ -1,0 +1,286 @@
+<div class="max-w-6xl flex flex-col gap-5">
+    <div class="flex items-baseline justify-between gap-3 flex-wrap">
+      <h1 class="text-xl font-semibold text-gray-900">Dashboard</h1>
+      @if (data(); as d) {
+        <p class="text-xs text-gray-500">
+          Updated {{ d.generatedAt | date: 'shortTime' }} · refreshes every minute ·
+          <button type="button" (click)="load()" class="underline hover:text-gray-900 cursor-pointer">Refresh now</button>
+        </p>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2" role="alert">{{ error() }}</p>
+    }
+
+    @if (data(); as d) {
+      <!-- Needs attention -->
+      <section aria-labelledby="attention-heading">
+        <h2 id="attention-heading" class="text-sm font-semibold text-gray-900 mb-2">Needs attention</h2>
+        @if (allClear()) {
+          <p class="text-sm text-gray-600 bg-white border border-gray-200 rounded-xl px-4 py-3">
+            All clear: nothing waiting for approval, no recent rejections, and nothing expiring in the next 30 days.
+          </p>
+        } @else {
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            @if (d.attention.pendingApproval > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ status: 'PendingApproval', sort: 'created' }"
+                class="block bg-white border border-amber-200 rounded-xl px-4 py-3 hover:bg-amber-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.pendingApproval }}</div>
+                <div class="text-sm text-gray-700">waiting for approval</div>
+                @if (oldestPendingDays(); as days) {
+                  <div class="text-xs text-amber-700 mt-0.5">oldest waiting {{ days }} {{ days === 1 ? 'day' : 'days' }}</div>
+                } @else {
+                  <div class="text-xs text-gray-500 mt-0.5">oldest requested today</div>
+                }
+              </a>
+            }
+            @if ((d.attention.pendingFinalApproval ?? 0) > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ status: 'PendingFinalApproval', sort: 'created' }"
+                class="block bg-white border border-violet-200 rounded-xl px-4 py-3 hover:bg-violet-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.pendingFinalApproval }}</div>
+                <div class="text-sm text-gray-700">waiting for final approval</div>
+                <div class="text-xs text-gray-500 mt-0.5">by an institution admin</div>
+              </a>
+            }
+            @if (auth.hasRole('InstitutionAdmin') && (d.attention.controlRequestsPending ?? 0) > 0) {
+              <a routerLink="/admin/audit"
+                class="block bg-white border border-violet-200 rounded-xl px-4 py-3 hover:bg-violet-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.controlRequestsPending }}</div>
+                <div class="text-sm text-gray-700">safeguard {{ d.attention.controlRequestsPending === 1 ? 'change' : 'changes' }} to confirm</div>
+                <div class="text-xs text-gray-500 mt-0.5">needs a second institution admin</div>
+              </a>
+            }
+            @if (d.attention.revocationRequestsPending > 0) {
+              <a routerLink="/admin/revoke-suspend"
+                class="block bg-white border border-red-200 rounded-xl px-4 py-3 hover:bg-red-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.revocationRequestsPending }}</div>
+                <div class="text-sm text-gray-700">{{ d.attention.revocationRequestsPending === 1 ? 'revocation request' : 'revocation requests' }} waiting</div>
+                <div class="text-xs text-red-700 mt-0.5">needs a second approver</div>
+              </a>
+            }
+            @if (d.attention.importsPending > 0) {
+              <a routerLink="/admin/imports" class="block bg-white border border-amber-200 rounded-xl px-4 py-3 hover:bg-amber-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.importsPending }}</div>
+                <div class="text-sm text-gray-700">paper {{ d.attention.importsPending === 1 ? 'import' : 'imports' }} waiting</div>
+                <div class="text-xs text-amber-700 mt-0.5">approve to issue them digitally</div>
+              </a>
+            }
+            @if (d.attention.awaitingPayment > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ status: 'AwaitingPayment', sort: 'created' }"
+                class="block bg-white border border-sky-200 rounded-xl px-4 py-3 hover:bg-sky-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.awaitingPayment }}</div>
+                <div class="text-sm text-gray-700">waiting for the student to pay</div>
+                @if (d.attention.paymentDueSoon > 0) {
+                  <div class="text-xs text-sky-800 mt-0.5">{{ d.attention.paymentDueSoon }} due within 3 days</div>
+                } @else {
+                  <div class="text-xs text-gray-500 mt-0.5">students are reminded before the deadline</div>
+                }
+              </a>
+            }
+            @if (d.attention.cancelledUnpaidLast30Days > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ status: 'Cancelled' }"
+                class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.cancelledUnpaidLast30Days }}</div>
+                <div class="text-sm text-gray-700">cancelled as not paid in the last 30 days</div>
+                <div class="text-xs text-gray-500 mt-0.5">the partner app can request them again</div>
+              </a>
+            }
+            @if (d.attention.webhooksFailing > 0 && auth.hasRole('InstitutionAdmin')) {
+              <a routerLink="/admin/api-keys" class="block bg-white border border-red-200 rounded-xl px-4 py-3 hover:bg-red-50/50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.webhooksFailing }}</div>
+                <div class="text-sm text-gray-700">{{ d.attention.webhooksFailing === 1 ? 'API key webhook' : 'API key webhooks' }} failing</div>
+                <div class="text-xs text-red-700 mt-0.5">the partner app isn't getting instant updates</div>
+              </a>
+            }
+            @if (d.attention.rejectedLast30Days > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ status: 'Rejected' }"
+                class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.rejectedLast30Days }}</div>
+                <div class="text-sm text-gray-700">rejected in the last 30 days</div>
+                <div class="text-xs text-gray-500 mt-0.5">may need correcting and requesting again</div>
+              </a>
+            }
+            @if (d.attention.expiringIn30Days > 0) {
+              <a [routerLink]="certificates" [queryParams]="{ expiring: 30, sort: 'expires' }"
+                class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+                <div class="text-2xl font-semibold text-gray-900">{{ d.attention.expiringIn30Days }}</div>
+                <div class="text-sm text-gray-700">expiring in the next 30 days</div>
+                <div class="text-xs text-gray-500 mt-0.5">soonest first</div>
+              </a>
+            }
+            @if (anchoringProblems() > 0) {
+              <div class="bg-white border border-red-200 rounded-xl px-4 py-3">
+                <div class="text-sm font-medium text-red-800">Bitcoin timestamping needs attention</div>
+                <div class="text-xs text-gray-600 mt-1">
+                  @if (d.attention.anchoringFailed > 0) { {{ d.attention.anchoringFailed }} failed. }
+                  @if (d.attention.anchoringDelayed > 0) { {{ d.attention.anchoringDelayed }} waiting over a day. }
+                  Certificates still verify by their digital signature. Please contact Certyfi support.
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Headline numbers -->
+      <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Totals">
+        <a [routerLink]="certificates" [queryParams]="{ status: 'Active' }" class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+          <div class="text-xs font-medium text-gray-500">Active certificates</div>
+          <div class="text-2xl font-semibold text-gray-900 mt-0.5">{{ d.totals.active | number }}</div>
+        </a>
+        <a [routerLink]="certificates" [queryParams]="{ issued: 'thisMonth', sort: '-issued' }" class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+          <div class="text-xs font-medium text-gray-500">Issued this month</div>
+          <div class="text-2xl font-semibold text-gray-900 mt-0.5">{{ d.totals.issuedThisMonth | number }}</div>
+          <div class="text-xs mt-0.5" [class.text-green-700]="issuedChange() > 0" [class.text-gray-500]="issuedChange() <= 0">
+            @if (issuedChange() === 0) { same as last month } @else {
+              {{ issuedChange() > 0 ? '+' : '−' }}{{ issuedChange() > 0 ? issuedChange() : -issuedChange() }} vs last month ({{ d.totals.issuedLastMonth }})
+            }
+          </div>
+        </a>
+        <div class="bg-white border border-gray-200 rounded-xl px-4 py-3">
+          <div class="text-xs font-medium text-gray-500">Verifications this month</div>
+          <div class="text-2xl font-semibold text-gray-900 mt-0.5">{{ d.totals.verificationsThisMonth | number }}</div>
+          <div class="text-xs text-gray-500 mt-0.5">public checks of your certificates</div>
+        </div>
+        <a [routerLink]="auth.hasRole('InstitutionAdmin') || auth.hasRole('Registrar') ? '/admin/students' : null"
+          class="block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-50">
+          <div class="text-xs font-medium text-gray-500">Students</div>
+          <div class="text-2xl font-semibold text-gray-900 mt-0.5">{{ d.totals.students | number }}</div>
+          <div class="text-xs text-gray-500 mt-0.5">{{ d.totals.studentsSignedUp | number }} signed up to the student portal</div>
+        </a>
+      </section>
+
+      <!-- Issuing activity -->
+      <section class="bg-white border border-gray-200 rounded-xl p-4" aria-labelledby="issued-heading">
+        <div class="flex items-baseline justify-between gap-2">
+          <h2 id="issued-heading" class="text-sm font-semibold text-gray-900">Certificates issued per month</h2>
+          <span class="text-xs text-gray-500">{{ issuedTotal() | number }} in the last 12 months · click a month to list them</span>
+        </div>
+        <ul class="mt-3 h-40 flex items-end gap-1.5 sm:gap-2" role="list">
+          @for (bar of issuedBars(); track bar.title) {
+            <li class="flex-1 h-full flex flex-col justify-end items-center min-w-0">
+              <a [routerLink]="certificates" [queryParams]="bar.link" [attr.aria-label]="bar.title + ': ' + bar.count + ' issued'" [title]="bar.title + ': ' + bar.count"
+                class="group w-full flex-1 flex flex-col justify-end items-center">
+                <span class="text-[11px] text-gray-600 mb-0.5">{{ bar.count || '' }}</span>
+                <span class="w-full max-w-10 rounded-t bg-[#7a2331]/80 group-hover:bg-[#7a2331]" [style.height.%]="bar.height"></span>
+              </a>
+              <span class="mt-1 text-[11px] text-gray-500 whitespace-nowrap" aria-hidden="true">{{ bar.label }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <div class="grid gap-5 lg:grid-cols-2">
+        <section class="bg-white border border-gray-200 rounded-xl p-4" aria-labelledby="achievement-heading">
+          <h2 id="achievement-heading" class="text-sm font-semibold text-gray-900">By achievement <span class="font-normal text-gray-500">(last 12 months, top 10)</span></h2>
+          @if (d.issuedByAchievement.length === 0) {
+            <p class="mt-3 text-sm text-gray-500">No certificates issued in the last 12 months.</p>
+          } @else {
+            <ul class="mt-3 space-y-2">
+              @for (a of d.issuedByAchievement; track a.id) {
+                <li>
+                  <a [routerLink]="certificates" [queryParams]="sinceRangeStart({ achievement: a.id })" class="block group">
+                    <div class="flex justify-between gap-2 text-sm">
+                      <span class="truncate text-gray-800 group-hover:underline">{{ a.name }}</span>
+                      <span class="text-gray-600 tabular-nums">{{ a.count | number }}</span>
+                    </div>
+                    <div class="mt-1 h-1.5 bg-gray-100 rounded-full"><div class="h-full rounded-full bg-[#7a2331]/70" [style.width.%]="share(a.count, d.issuedByAchievement)"></div></div>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl p-4" aria-labelledby="source-heading">
+          <h2 id="source-heading" class="text-sm font-semibold text-gray-900">By source <span class="font-normal text-gray-500">(last 12 months)</span></h2>
+          @if (d.issuedBySource.length === 0) {
+            <p class="mt-3 text-sm text-gray-500">No certificates issued in the last 12 months.</p>
+          } @else {
+            <ul class="mt-3 space-y-2">
+              @for (s of d.issuedBySource; track s.name + s.apiClientId) {
+                <li>
+                  <a [routerLink]="certificates" [queryParams]="sinceRangeStart(s.source === 'Staff' ? { source: 'Staff' } : { source: 'Api', apiKey: s.apiClientId })" class="block group">
+                    <div class="flex justify-between gap-2 text-sm">
+                      <span class="truncate text-gray-800 group-hover:underline">
+                        {{ s.source === 'Staff' ? 'Staff (this portal)' : 'Partner API: ' + s.name }}
+                      </span>
+                      <span class="text-gray-600 tabular-nums">{{ s.count | number }}</span>
+                    </div>
+                    <div class="mt-1 h-1.5 bg-gray-100 rounded-full"><div class="h-full rounded-full bg-slate-700/70" [style.width.%]="share(s.count, d.issuedBySource)"></div></div>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <!-- Verification activity -->
+      <section class="bg-white border border-gray-200 rounded-xl p-4" aria-labelledby="verified-heading">
+        <div class="flex items-baseline justify-between gap-2">
+          <h2 id="verified-heading" class="text-sm font-semibold text-gray-900">Verifications per month</h2>
+          <span class="text-xs text-gray-500">{{ verificationTotal() | number }} in the last 12 months</span>
+        </div>
+        <ul class="mt-3 h-32 flex items-end gap-1.5 sm:gap-2" role="list">
+          @for (bar of verificationBars(); track bar.title) {
+            <li class="flex-1 h-full flex flex-col justify-end items-center min-w-0" [attr.aria-label]="bar.title + ': ' + bar.count + ' verifications'" [title]="bar.title + ': ' + bar.count">
+              <span class="text-[11px] text-gray-600 mb-0.5" aria-hidden="true">{{ bar.count || '' }}</span>
+              <span class="w-full max-w-10 rounded-t bg-slate-600/70" [style.height.%]="bar.height" aria-hidden="true"></span>
+              <span class="mt-1 text-[11px] text-gray-500 whitespace-nowrap" aria-hidden="true">{{ bar.label }}</span>
+            </li>
+          }
+        </ul>
+
+        <div class="mt-5 grid gap-5 lg:grid-cols-2">
+          <div>
+            <h3 class="text-xs font-medium text-gray-500">How people checked</h3>
+            @if (d.verificationsByChannel.length === 0) {
+              <p class="mt-2 text-sm text-gray-500">No verifications yet.</p>
+            } @else {
+              <ul class="mt-2 space-y-2">
+                @for (c of d.verificationsByChannel; track c.channel) {
+                  <li>
+                    <div class="flex justify-between gap-2 text-sm">
+                      <span class="text-gray-800">{{ channelLabel(c.channel) }}</span>
+                      <span class="text-gray-600 tabular-nums">{{ c.count | number }}</span>
+                    </div>
+                    <div class="mt-1 h-1.5 bg-gray-100 rounded-full"><div class="h-full rounded-full bg-slate-600/70" [style.width.%]="share(c.count, d.verificationsByChannel)"></div></div>
+                  </li>
+                }
+              </ul>
+            }
+            @if (d.unmatchedLookups > 0) {
+              <p class="mt-3 text-xs text-gray-600">
+                {{ d.unmatchedLookups }} code {{ d.unmatchedLookups === 1 ? 'look-up' : 'look-ups' }} matched no certificate
+                (mistyped codes, or someone checking a certificate you didn't issue).
+              </p>
+            }
+          </div>
+          <div>
+            <h3 class="text-xs font-medium text-gray-500">Most verified certificates</h3>
+            @if (d.mostVerified.length === 0) {
+              <p class="mt-2 text-sm text-gray-500">No verifications yet.</p>
+            } @else {
+              <ol class="mt-2 divide-y divide-gray-100">
+                @for (m of d.mostVerified; track m.credentialId) {
+                  <li>
+                    <a [routerLink]="certificates" [queryParams]="{ open: m.credentialId }" class="flex items-center justify-between gap-3 py-1.5 group">
+                      <span class="min-w-0">
+                        <span class="block text-sm text-gray-900 truncate group-hover:underline">{{ m.recipientName }}</span>
+                        <span class="block text-xs text-gray-500 truncate">{{ m.achievementTitle }}</span>
+                      </span>
+                      <span class="text-sm text-gray-600 tabular-nums whitespace-nowrap">{{ m.count | number }}×</span>
+                    </a>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+        </div>
+      </section>
+    } @else if (!error()) {
+      <p class="text-sm text-gray-500">Loading dashboard...</p>
+    }
+  </div>

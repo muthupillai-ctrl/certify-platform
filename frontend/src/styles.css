@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+html, body { height: 100%; margin: 0; }
+
+@media print {
+  @page { margin: 0; }
+  html, body { height: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* A certificate element with a chosen font: everything inside uses it,
+   replacing the element's built-in look (certificate-style.ts). */
+.cert-font-set * { font-family: inherit !important; }
+/* A text element keeps the line breaks it was typed with. */
+.cert-text { white-space: pre-line; }

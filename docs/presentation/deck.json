@@ -1,0 +1,70 @@
+{
+  "v": 4,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-09-29T09:00:00Z"
+  },
+  "title": "Certyfi — What We're Building",
+  "cover": "cover",
+  "order": [
+    "cover",
+    "problem",
+    "what",
+    "example",
+    "flow",
+    "roles",
+    "manage",
+    "paper",
+    "trust",
+    "signature",
+    "selfcheck",
+    "bitcoin",
+    "verify",
+    "recipient",
+    "portal",
+    "partner",
+    "security",
+    "privacy",
+    "status",
+    "next",
+    "start",
+    "close"
+  ],
+  "sections": {
+    "s1": {
+      "description": "Why Certyfi exists and what it does",
+      "start": "cover"
+    },
+    "s2": {
+      "description": "How a certificate is issued and who does what",
+      "start": "flow"
+    },
+    "s2b": {
+      "description": "Running certificates day to day, including paper records",
+      "start": "manage"
+    },
+    "s3": {
+      "description": "Why a Certyfi certificate can be trusted",
+      "start": "trust"
+    },
+    "s4": {
+      "description": "Connecting other systems through the Partner API",
+      "start": "partner"
+    },
+    "s5": {
+      "description": "Where the build stands and what comes next",
+      "start": "status"
+    }
+  },
+  "faces": {
+    "source-serif-4": {
+      "family": "Source Serif 4",
+      "href": "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&display=swap"
+    },
+    "ibm-plex-sans": {
+      "family": "IBM Plex Sans",
+      "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    }
+  },
+  "designSystems": []
+}

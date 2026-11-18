@@ -1,0 +1,93 @@
+<div class="dev-page">
+  <header class="dev-top">
+    <div class="dev-top-inner">
+      <a routerLink="/" class="dev-brand" aria-label="Certyfi home">
+        <span class="dev-mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </span>
+        Certyfi
+      </a>
+      @if (current(); as g) {
+        <p class="dev-eyebrow"><a routerLink="/help" class="help-crumb">Help</a> · {{ g.audience }}</p>
+        <h1>{{ g.title }}</h1>
+        <p class="dev-lede">{{ g.summary }}</p>
+      } @else {
+        <p class="dev-eyebrow">Help</p>
+        <h1>How to use Certyfi</h1>
+        <p class="dev-lede">Step-by-step guides for institutions, students and anyone checking a certificate.</p>
+      }
+      <div class="help-search" role="search">
+        <label for="help-q" class="sr-only">Search the guides</label>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.2-5.2m0 0A7.5 7.5 0 1 0 5.2 5.2a7.5 7.5 0 0 0 10.6 10.6Z" /></svg>
+        <input id="help-q" type="search" placeholder="Search the guides, e.g. approve, signatory, pay" [value]="query()" (input)="query.set($any($event.target).value)" autocomplete="off" />
+      </div>
+    </div>
+  </header>
+
+  @if (query().trim().length > 1) {
+    <div class="help-results">
+      <p class="help-results-count" aria-live="polite">{{ hits().length ? hits().length + (hits().length === 12 ? '+' : '') + ' results' : 'Nothing found. Try another word.' }}</p>
+      <ul>
+        @for (h of hits(); track h.guide.id + h.id) {
+          <li>
+            <button type="button" (click)="openHit(h)">
+              <span class="help-hit-guide">{{ h.guide.title }}</span>
+              <span class="help-hit-title">{{ h.title }}</span>
+              <span class="help-hit-snippet">{{ h.snippet }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (error()) {
+    <p class="help-error" role="alert">The guides couldn't be loaded. Reload the page to try again.</p>
+  } @else if (current()) {
+    <div class="dev-body">
+      @if (toc().length) {
+        <nav class="dev-toc" aria-label="Contents">
+          <p>Contents</p>
+          @for (t of toc(); track t.id) {
+            <a [href]="'#' + t.id" (click)="scrollTo(t.id, $event)" [class]="t.level === 3 ? 'dev-toc-sub' : ''">{{ t.text }}</a>
+          }
+        </nav>
+      }
+      <main class="dev-doc" (click)="onClick($event)" (keydown)="onKeydown($event)">
+        @if (html()) {
+          <div [innerHTML]="html()"></div>
+        } @else {
+          <p class="dev-loading">Loading the guide…</p>
+        }
+      </main>
+    </div>
+  } @else {
+    <main class="help-index">
+      <ul class="help-cards">
+        @for (g of guides; track g.id) {
+          <li>
+            <a [routerLink]="['/help', g.id]" class="help-card">
+              <span class="help-card-audience">{{ g.audience }}</span>
+              <span class="help-card-title">{{ g.title }}</span>
+              <span class="help-card-summary">{{ g.summary }}</span>
+            </a>
+          </li>
+        }
+        <li>
+          <a routerLink="/developers" class="help-card">
+            <span class="help-card-audience">Developers</span>
+            <span class="help-card-title">Developer guide (API)</span>
+            <span class="help-card-summary">Connect an LMS or other system to issue certificates automatically.</span>
+          </a>
+        </li>
+      </ul>
+    </main>
+  }
+
+  <footer class="dev-foot">
+    <span>Certyfi by Ahamsys</span>
+    <span><a routerLink="/help">Help home</a> · <a routerLink="/verify">Verify a certificate</a></span>
+  </footer>
+</div>

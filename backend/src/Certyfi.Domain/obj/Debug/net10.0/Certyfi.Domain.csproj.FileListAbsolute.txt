@@ -1,0 +1,11 @@
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/bin/Debug/net10.0/Certyfi.Domain.deps.json
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/bin/Debug/net10.0/Certyfi.Domain.dll
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/bin/Debug/net10.0/Certyfi.Domain.pdb
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.AssemblyInfoInputs.cache
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.AssemblyInfo.cs
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.csproj.CoreCompileInputs.cache
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.dll
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/refint/Certyfi.Domain.dll
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/Certyfi.Domain.pdb
+/Users/muthuramanathapillai/projects/certyfi-platform/backend/src/Certyfi.Domain/obj/Debug/net10.0/ref/Certyfi.Domain.dll

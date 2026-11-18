@@ -1,0 +1,143 @@
+@if (loading()) {
+  <p class="text-sm text-gray-500">Loading users...</p>
+} @else if (listError()) {
+  <p class="text-sm text-red-700">{{ listError() }}</p>
+} @else if (users().length === 0) {
+  <p class="text-sm text-gray-500">No users yet.</p>
+} @else {
+  <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Name</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Email</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Roles</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Last sign-in</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer" (click)="open(user)">
+            <td class="px-4 py-3 text-gray-900">
+              <button type="button" class="text-left underline decoration-gray-300 hover:decoration-gray-900 cursor-pointer" (click)="open(user); $event.stopPropagation()">
+                {{ user.fullName }}
+              </button>
+              @if (isSelf(user)) { <span class="text-xs text-gray-400">(you)</span> }
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ user.roles.join(', ') }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ user.lastLoginAt ? (user.lastLoginAt | date: 'mediumDate') : 'Never' }}</td>
+            <td class="px-4 py-3">
+              @if (!user.isActive) {
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Inactive</span>
+              } @else if (user.mustChangePassword) {
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Password reset</span>
+              } @else {
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-modal [open]="selected() !== null" [title]="selected()?.fullName ?? 'User'" maxWidthClass="max-w-lg" (closed)="close()">
+  @if (selected(); as user) {
+    @if (temporaryPassword()) {
+      <div class="mb-5 bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <p class="text-sm font-medium text-amber-900 mb-1">Temporary password for {{ user.fullName }}</p>
+        <p class="text-sm text-amber-800 mb-3">
+          Give it to them securely. It's shown only now; they'll choose their own password when they next sign in.
+        </p>
+        <div class="flex items-center gap-2">
+          <code class="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-md text-sm font-mono text-gray-900">{{ temporaryPassword() }}</code>
+          <button type="button" (click)="copyTemporary()" class="px-3 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 cursor-pointer">
+            {{ copied() ? 'Copied' : 'Copy' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (editing()) {
+      <form (ngSubmit)="saveEdit(user)" #f="ngForm">
+        <div class="mb-4">
+          <label for="u-name" class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+          <input id="u-name" name="fullName" [(ngModel)]="editName" required maxlength="200"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        </div>
+        <div class="mb-4">
+          <label for="u-email" class="block text-sm font-medium text-gray-700 mb-1">Email (used to sign in)</label>
+          <input id="u-email" name="email" type="email" [(ngModel)]="editEmail" required maxlength="320"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        </div>
+        <fieldset class="mb-4">
+          <legend class="block text-sm font-medium text-gray-700 mb-2">Roles</legend>
+          <div class="grid grid-cols-2 gap-1">
+            @for (role of roles; track role) {
+              <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" [name]="'role-' + role" [(ngModel)]="editRoles[role]" />
+                {{ role }}
+              </label>
+            }
+          </div>
+        </fieldset>
+        @if (error()) {
+          <p class="text-sm text-red-700 mb-4" role="alert">{{ error() }}</p>
+        }
+        <div class="flex gap-2">
+          <button type="submit" [disabled]="f.invalid || chosenRoles.length === 0 || busy()"
+            class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+            {{ busy() ? 'Saving...' : 'Save' }}
+          </button>
+          <button type="button" (click)="editing.set(false)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+        </div>
+      </form>
+    } @else {
+      <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm mb-5">
+        <dt class="text-gray-500">Email</dt><dd class="text-gray-900 break-all">{{ user.email }}</dd>
+        <dt class="text-gray-500">Roles</dt><dd class="text-gray-900">{{ user.roles.join(', ') }}</dd>
+        <dt class="text-gray-500">Status</dt>
+        <dd class="text-gray-900">
+          {{ user.isActive ? 'Active' : 'Inactive' }}{{ user.mustChangePassword ? ' · must choose a new password at next sign-in' : '' }}
+        </dd>
+        <dt class="text-gray-500">Created</dt><dd class="text-gray-900">{{ user.createdAt | date: 'medium' }}</dd>
+        <dt class="text-gray-500">Last sign-in</dt><dd class="text-gray-900">{{ user.lastLoginAt ? (user.lastLoginAt | date: 'medium') : 'Never' }}</dd>
+        <dt class="text-gray-500">Password changed</dt><dd class="text-gray-900">{{ user.passwordChangedAt ? (user.passwordChangedAt | date: 'medium') : '—' }}</dd>
+        <dt class="text-gray-500">Certificates</dt>
+        <dd class="text-gray-900">{{ user.certificatesRequested }} prepared · {{ user.certificatesDecided }} approved or rejected</dd>
+      </dl>
+      @if (error()) {
+        <p class="text-sm text-red-700 mb-4" role="alert">{{ error() }}</p>
+      }
+      @if (lockedAdmin(user)) {
+        <p class="pt-3 border-t border-gray-100 text-sm text-gray-600">
+          Institution admins are managed by Ahamsys: contact Ahamsys to add, change, reset or remove one.
+          This keeps final approval and safeguard changes in the hands of two real people.
+        </p>
+      } @else {
+      <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+        <button type="button" (click)="startEdit(user)" class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 cursor-pointer">Edit</button>
+        @if (!isSelf(user)) {
+          <button type="button" (click)="resetPassword(user)" [disabled]="busy()"
+            class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-50 cursor-pointer">Reset password</button>
+          @if (user.isActive) {
+            <button type="button" (click)="setActive(user, false)" [disabled]="busy()"
+              class="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-sm hover:bg-red-50 disabled:opacity-50 cursor-pointer">Deactivate</button>
+          } @else {
+            <button type="button" (click)="setActive(user, true)" [disabled]="busy()"
+              class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-50 cursor-pointer">Reactivate</button>
+          }
+        } @else {
+          <p class="text-xs text-gray-500 self-center">To change your own password, use the lock icon at the top of the page.</p>
+        }
+        <button type="button" (click)="close()" class="ml-auto px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">
+          {{ temporaryPassword() ? 'Done' : 'Close' }}
+        </button>
+      </div>
+      }
+    }
+  }
+</app-modal>

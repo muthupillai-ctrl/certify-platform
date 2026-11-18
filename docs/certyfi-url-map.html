@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certyfi URL Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a reference sheet. Sticky system switch at the top, then one table per audience; paths are the scannable column. */
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --sunk: #efede6;
+  --fg: #172033;
+  --muted: #5d6677;
+  --line: #e1ddd3;
+  --navy: #15223b;
+  --accent: #7a2331;
+  --gold: #a87b22;
+  --prod: #1f6b45;
+  --test: #b4500c;
+  --dev: #3c5a99;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151d; --surface: #171c26; --sunk: #1d2330; --fg: #e5e8ef; --muted: #9aa3b5; --line: #2a3141;
+    --navy: #c8d2ea; --accent: #e28c99; --gold: #dcb35c; --prod: #6fcf9d; --test: #f2a46b; --dev: #93b2ee;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151d; --surface: #171c26; --sunk: #1d2330; --fg: #e5e8ef; --muted: #9aa3b5; --line: #2a3141;
+  --navy: #c8d2ea; --accent: #e28c99; --gold: #dcb35c; --prod: #6fcf9d; --test: #f2a46b; --dev: #93b2ee;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 72px; }
+header { display: grid; gap: 8px; margin-bottom: 20px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-family: var(--font-display); font-size: clamp(28px, 4.5vw, 40px); line-height: 1.15; color: var(--navy); text-wrap: balance; }
+.lede { margin: 0; max-width: 64ch; color: var(--muted); }
+
+.systems { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 22px 0 10px; }
+@media (max-width: 760px) { .systems { grid-template-columns: minmax(0, 1fr); } }
+.sys { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.sys .name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+.sys p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.sys code { font-family: var(--font-mono); font-size: 13px; word-break: break-all; color: var(--fg); }
+
+.switch { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.switch .label { font-size: 13px; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { font: 500 14px var(--font-body); color: var(--muted); background: none; border: 0; padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { color: var(--fg); background: var(--sunk); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.base { font-family: var(--font-mono); font-size: 13px; color: var(--muted); word-break: break-all; }
+
+nav.jump { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 4px; font-size: 14px; }
+nav.jump a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.jump a:hover, nav.jump a:focus-visible { color: var(--fg); border-bottom-color: var(--accent); outline: none; }
+
+section { scroll-margin-top: 70px; margin-top: 30px; }
+h2 { font-family: var(--font-display); font-size: 23px; color: var(--navy); margin: 0 0 4px; }
+section > p { margin: 0 0 10px; color: var(--muted); max-width: 70ch; }
+.table { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--sunk); }
+td.page { font-weight: 500; min-width: 160px; }
+td.page small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+td.url { font-family: var(--font-mono); font-size: 13px; min-width: 260px; word-break: break-all; }
+td.url a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+td.url a:hover { border-bottom-color: var(--accent); }
+td.url .ph { color: var(--gold); }
+td.url .na { color: var(--muted); font-family: var(--font-body); font-style: italic; }
+td.who { color: var(--muted); font-size: 13px; min-width: 140px; }
+.copy { margin-left: 6px; font: 500 11px var(--font-body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; cursor: pointer; vertical-align: 1px; }
+.copy:hover { color: var(--fg); }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.note { margin-top: 10px; font-size: 13.5px; color: var(--muted); max-width: 72ch; }
+.note code, section > p code { font-family: var(--font-mono); font-size: 12.5px; background: var(--sunk); padding: 1px 5px; border-radius: 4px; color: var(--fg); }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Reference</div>
+    <h1>Certyfi URL Map</h1>
+    <p class="lede">Every address in Certyfi, grouped by who uses it. Pick a system below and every link switches to it. Parts in <span style="color:var(--gold);font-family:var(--font-mono)">{braces}</span> change per institution, certificate or link.</p>
+  </header>
+
+  <div class="systems">
+    <div class="sys">
+      <div class="name"><span class="dot" style="background:var(--prod)"></span>Production</div>
+      <p>The live system. Real institutions and certificates; emails go out through Resend.</p>
+      <code>https://certyfi.ahamsys.com</code>
+    </div>
+    <div class="sys">
+      <div class="name"><span class="dot" style="background:var(--test)"></span>Test</div>
+      <p>Built like production for checking changes and partner testing. Every email is caught in its inbox.</p>
+      <code>https://certyfi.onnurendu.shop</code>
+    </div>
+    <div class="sys">
+      <div class="name"><span class="dot" style="background:var(--dev)"></span>Dev</div>
+      <p>The working copy on the MacBook, while it's running. Reloads as code changes.</p>
+      <code>http://localhost:4200 (API :5080)</code>
+    </div>
+  </div>
+
+  <div class="switch" role="group" aria-label="System">
+    <span class="label">Links point to</span>
+    <div class="seg">
+      <button type="button" id="env-prod" data-env="prod" aria-pressed="true"><span class="dot" style="background:var(--prod)"></span>Production</button>
+      <button type="button" id="env-test" data-env="test" aria-pressed="false"><span class="dot" style="background:var(--test)"></span>Test</button>
+      <button type="button" id="env-dev" data-env="dev" aria-pressed="false"><span class="dot" style="background:var(--dev)"></span>Dev</button>
+    </div>
+    <span class="base" id="base"></span>
+  </div>
+
+  <nav class="jump" aria-label="Sections">
+    <a href="#public">Public</a>
+    <a href="#students">Students</a>
+    <a href="#staff">Institution staff</a>
+    <a href="#platform">Platform operators</a>
+    <a href="#developers">Developers and API</a>
+    <a href="#tools">Inboxes and tools</a>
+    <a href="#servers">Servers and files</a>
+  </nav>
+
+  <main id="sections"></main>
+
+  <section id="servers">
+    <h2>Servers and files</h2>
+    <p>Not web pages: where things live on pwms-server and on the MacBook. Secrets stay in the files named; this sheet holds none.</p>
+    <div class="table"><table>
+      <thead><tr><th>What</th><th>Production</th><th>Test</th></tr></thead>
+      <tbody>
+        <tr><td class="page">App folder</td><td class="url">/data/apps/certyfi/</td><td class="url">/data/apps/certyfi-test/</td></tr>
+        <tr><td class="page">Settings and keys</td><td class="url">/data/apps/certyfi/.env.production</td><td class="url">/data/apps/certyfi-test/.env.test</td></tr>
+        <tr><td class="page">Database<small>reachable from the server only</small></td><td class="url">certyfi-postgres · 127.0.0.1:5436</td><td class="url">certyfi-test-postgres · 127.0.0.1:5437</td></tr>
+        <tr><td class="page">Backups<small>taken before every deploy</small></td><td class="url">/data/backups/certyfi/</td><td class="url">/data/backups/certyfi-test/ (last 14)</td></tr>
+        <tr><td class="page">Shared proxy config</td><td class="url">/data/reverse-proxy/nginx/conf.d/certyfi.conf</td><td class="url">/data/reverse-proxy/nginx/conf.d/certyfi-test.conf</td></tr>
+        <tr><td class="page">Test inbox login</td><td class="url"><span class="na">none</span></td><td class="url">/data/apps/certyfi-test/mailpit-login.txt</td></tr>
+      </tbody>
+    </table></div>
+    <div class="table" style="margin-top:12px"><table>
+      <thead><tr><th>On the MacBook (repo)</th><th>Use</th></tr></thead>
+      <tbody>
+        <tr><td class="url">scripts/deploy.sh test|prod</td><td>Deploy: backup, migrations, backend, frontend</td></tr>
+        <tr><td class="url">scripts/systems.sh status</td><td>Is each system up? Also <code>test start|stop|logs|open|inbox</code>, <code>dev start|stop</code></td></tr>
+        <tr><td class="url">scripts/reset-platform-password.sh local|test|prod &lt;email&gt;</td><td>Reset a platform operator's password</td></tr>
+        <tr><td class="url">docs/partner-api.md</td><td>The Partner API guide (the /developers page reads it)</td></tr>
+        <tr><td class="url">docs/user-guide/</td><td>The user guides and their screenshots (the /help pages read them)</td></tr>
+        <tr><td class="url">docs/architecture.md</td><td>How Certyfi is built</td></tr>
+        <tr><td class="url">deploy/DEPLOY.md · deploy/test/README.md</td><td>Production and test system set-up</td></tr>
+        <tr><td class="url">Dev database</td><td>certyfi-platform-postgres-1 · localhost:5433</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>Certyfi by Ahamsys · Addresses as of 20 October 2026.</footer>
+</div>
+
+<script>
+const ENVS = {
+  prod: { web: 'https://certyfi.ahamsys.com', api: 'https://certyfi.ahamsys.com' },
+  test: { web: 'https://certyfi.onnurendu.shop', api: 'https://certyfi.onnurendu.shop' },
+  dev: { web: 'http://localhost:4200', api: 'http://localhost:5080' },
+};
+
+// [page, path, who, options] — api: served by the API (port 5080 on dev); only: systems it exists on.
+const SECTIONS = [
+  { id: 'public', title: 'Public', intro: 'Open to anyone, no sign-in.', rows: [
+    ['Landing page', '/', 'Everyone'],
+    ['Presentation', '/presentation', 'Invited guests', { note: 'Production asks for an access pass first (/access, by mobile number). Test has no gate.' }],
+    ['Verify a certificate', '/verify', 'Employers, anyone', { small: 'By institution and certificate code' }],
+    ['Verify a credential file', '/verify/file', 'Employers, anyone', { small: 'A downloaded Open Badges file' }],
+    ['A certificate', '/verify/{institution-code}/{certificate-id}', 'Anyone with the link or QR code'],
+    ['Template preview', '/template-preview/{token}', 'Partner apps', { small: 'Link from the Partner API, valid 15 minutes' }],
+    ['Help (user guides)', '/help', 'Everyone', { small: 'Start page with search' }],
+    ['Institution guide', '/help/institution', 'Institution staff'],
+    ['Student guide', '/help/students', 'Students'],
+    ['Verifier guide', '/help/verifiers', 'Employers, anyone'],
+  ]},
+  { id: 'students', title: 'Students', intro: 'The student portal. Students sign in with email and password; no institution code needed.', rows: [
+    ['Student sign-in', '/student/login', 'Students'],
+    ['Institution sign-in', '/student/{institution-code}/login', 'Students', { small: 'Shows that institution\'s banners' }],
+    ['My certificates', '/student/{institution-code}', 'Signed-in students', { small: 'Search, pay, view' }],
+    ['Set up or reset password', '/student/welcome/{token}', 'Students', { small: 'From the emails Certyfi sends' }],
+  ]},
+  { id: 'staff', title: 'Institution staff', intro: 'Each institution\'s own admin area. Staff sign in with the institution code, email and password.', rows: [
+    ['Staff sign-in', '/login', 'All staff'],
+    ['Change password', '/change-password', 'All staff'],
+    ['Dashboard', '/admin/dashboard', 'Admin, Registrar, Approver'],
+    ['Certificates', '/admin/certificates', 'All staff'],
+    ['Students', '/admin/students', 'Admin, Registrar'],
+    ['Import paper certificates', '/admin/imports', 'Admin, Registrar, Approver'],
+    ['Revoke and suspend', '/admin/revoke-suspend', 'Admin, Approver'],
+    ['Achievements', '/admin/achievements', 'All staff'],
+    ['Templates', '/admin/templates', 'Institution admin'],
+    ['New template (design gallery)', '/admin/templates/new', 'Institution admin'],
+    ['Edit a template', '/admin/templates/{template-id}/edit', 'Institution admin'],
+    ['Signatories', '/admin/signatories', 'Institution admin'],
+    ['Users', '/admin/users', 'Institution admin'],
+    ['Portal banners', '/admin/portal-banners', 'Institution admin'],
+    ['API keys', '/admin/api-keys', 'Institution admin'],
+    ['Verification activity', '/admin/verification', 'Admin, Registrar, Approver'],
+    ['Reports', '/admin/reports', 'Institution admin'],
+    ['Settings', '/admin/settings', 'Institution admin'],
+  ]},
+  { id: 'platform', title: 'Platform operators', intro: 'Ahamsys\'s own console for running Certyfi: institutions, operators and the Bitcoin anchoring.', rows: [
+    ['Platform sign-in', '/platform/login', 'Platform operators'],
+    ['Institutions', '/platform/tenants', 'Platform operators'],
+    ['One institution', '/platform/tenants/{institution-id}', 'Platform operators'],
+    ['Bitcoin anchoring', '/platform/anchoring', 'Platform operators'],
+    ['Platform users', '/platform/users', 'Platform operators'],
+    ['My profile', '/platform/profile', 'Platform operators'],
+    ['Presentation access passes', '/platform/home-access', 'Platform operators'],
+    ['Reset password', '/platform/reset-password/{token}', 'Platform operators', { small: 'From the forgot-password email' }],
+    ['Confirm new email', '/platform/confirm-email/{token}', 'Platform operators', { small: 'From the change-email email' }],
+  ]},
+  { id: 'developers', title: 'Developers and API', intro: 'For partner apps issuing certificates (LMS, student systems). Send developers the guide.', rows: [
+    ['Developer guide', '/developers', 'Partner developers', { small: 'Examples use the system\'s own address' }],
+    ['Interactive API reference', '/api/v1/docs/', 'Partner developers', { api: true }],
+    ['Partner API base', '/api/v1/partner', 'Partner apps', { api: true, nolink: true, small: 'Needs X-Tenant-Slug and X-Api-Key' }],
+    ['Certificate data (public)', '/api/v1/verify/{institution-code}/{certificate-id}', 'Verifiers, apps', { api: true }],
+    ['Signing public key', '/api/v1/verify/{institution-code}/signing-keys/{key-id}', 'Verifiers', { api: true }],
+    ['Bitcoin timestamp proof', '/api/v1/verify/{institution-code}/{certificate-id}/anchor-proof', 'Verifiers', { api: true, small: '.ots file' }],
+    ['Health check', '/health', 'Monitoring', { api: true }],
+  ]},
+  { id: 'tools', title: 'Inboxes and tools', intro: 'Where to see emails the test and dev systems send instead of delivering them.', rows: [
+    ['Test inbox', '/mail/', 'Ahamsys team', { only: ['test'], small: 'Password: see Servers and files' }],
+    ['Dev inbox', 'http://localhost:8025', 'Developer', { only: ['dev'], absolute: true }],
+  ]},
+];
+
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function render(env) {
+  const base = ENVS[env];
+  document.getElementById('base').textContent = base.web + (base.api !== base.web ? '  ·  API ' + base.api : '');
+  const html = SECTIONS.map((sec) => {
+    const rows = sec.rows.map(([page, path, who, o = {}]) => {
+      const available = !o.only || o.only.includes(env);
+      let url;
+      if (!available) {
+        url = `<span class="na">Not on ${env === 'prod' ? 'production' : env === 'dev' ? 'dev' : 'test'}</span>`;
+      } else {
+        const full = o.absolute ? path : (o.api ? base.api : base.web) + path;
+        const shown = esc(full).replace(/\{[^}]+\}/g, (m) => `<span class="ph">${m}</span>`);
+        const linkable = !/\{/.test(path) && !o.nolink;
+        url = (linkable ? `<a href="${esc(full)}" target="_blank" rel="noopener">${shown}</a>` : shown) +
+          `<button type="button" class="copy" data-copy="${esc(full)}">Copy</button>`;
+      }
+      return `<tr><td class="page">${esc(page)}${o.small ? `<small>${esc(o.small)}</small>` : ''}</td><td class="url">${url}</td><td class="who">${esc(who)}</td></tr>` +
+        (o.note ? `<tr><td></td><td colspan="2" class="note" style="padding-top:0">${esc(o.note)}</td></tr>` : '');
+    }).join('');
+    return `<section id="${sec.id}"><h2>${esc(sec.title)}</h2><p>${esc(sec.intro)}</p><div class="table"><table><thead><tr><th>Page</th><th>Address</th><th>Who uses it</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  }).join('');
+  document.getElementById('sections').innerHTML = html;
+  document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.env === env)));
+  try { localStorage.setItem('certyfi-url-map-env', env); } catch (e) {}
+}
+
+document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => render(b.dataset.env)));
+document.getElementById('sections').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-copy]');
+  if (!btn) return;
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1400); };
+  try { navigator.clipboard.writeText(btn.dataset.copy).then(done, () => {}); } catch (err) {}
+});
+
+let start = 'prod';
+try { const saved = localStorage.getItem('certyfi-url-map-env'); if (saved && ENVS[saved]) start = saved; } catch (e) {}
+render(start);
+</script>
+</body>
+</html>

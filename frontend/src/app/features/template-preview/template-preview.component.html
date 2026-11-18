@@ -1,0 +1,25 @@
+<div class="min-h-dvh bg-gray-100 px-4 py-6 sm:py-8">
+  <div class="max-w-4xl mx-auto">
+    @if (loading()) {
+      <p class="text-sm text-gray-500 text-center py-16">Loading the preview...</p>
+    } @else if (error()) {
+      <div class="max-w-md mx-auto bg-white border border-gray-200 rounded-lg p-6 text-center" role="alert">
+        <p class="text-sm font-medium text-gray-900">Preview unavailable</p>
+        <p class="text-sm text-gray-600 mt-1">{{ error() }}</p>
+      </div>
+    } @else {
+      @if (preview(); as p) {
+        <div class="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h1 class="text-base font-semibold text-gray-900">{{ p.template.name }}</h1>
+          <p class="text-xs text-gray-500">{{ p.institution.name }} · sample data, not a real certificate</p>
+        </div>
+        @if (data(); as d) {
+          <app-certificate-preview [data]="d" [qrUrl]="sampleQrUrl" [verificationCode]="sampleCode" />
+        }
+        <p class="mt-4 text-xs text-gray-500 text-center">
+          Real certificates show the recipient's own details and a QR code that checks them on Certyfi.
+        </p>
+      }
+    }
+  </div>
+</div>

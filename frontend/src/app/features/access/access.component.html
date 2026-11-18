@@ -1,0 +1,40 @@
+<div class="min-h-dvh flex items-center justify-center bg-[#15223B] px-4 py-10">
+  <div class="w-full max-w-md">
+    <a routerLink="/" class="flex items-center gap-2.5 mb-6">
+      <span class="w-9 h-9 rounded-full bg-[#7a2331] flex items-center justify-center shadow-[inset_0_0_0_1.5px_#dcae4a]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" class="w-4 h-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+      </span>
+      <span class="text-xl font-semibold text-[#F7F5F0]">Certyfi</span>
+      <span class="text-sm text-[#9FB0C9]">by Ahamsys</span>
+    </a>
+
+    <form (ngSubmit)="submit()" class="bg-white rounded-xl p-6 shadow-xl">
+      <h1 class="text-lg font-semibold text-gray-900">The presentation is private</h1>
+      <p class="mt-1 text-sm text-gray-600">Enter the mobile number you were invited with.</p>
+      <label for="mobile" class="mt-5 block text-sm font-medium text-gray-700">Mobile number</label>
+      <input id="mobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" [(ngModel)]="mobile" placeholder="e.g. +234 706 289 1305"
+        class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      <p class="mt-1 text-xs text-gray-500">10 to 16 digits, with or without the country code.</p>
+      @if (error()) {
+        <p class="mt-3 text-sm text-red-700" role="alert">{{ error() }}</p>
+      }
+      <button type="submit" [disabled]="!valid() || checking()"
+        class="mt-5 w-full px-4 py-2 rounded-md bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-40 cursor-pointer">
+        {{ checking() ? 'Checking…' : 'Continue' }}
+      </button>
+    </form>
+
+    <p class="mt-6 text-sm text-[#C9D3E3]">
+      <a routerLink="/" class="underline text-white">← Back to the home page</a>
+    </p>
+    <p class="mt-2 text-sm text-[#C9D3E3]">
+      Checking a certificate? <a routerLink="/verify" class="underline text-white">Verify a certificate</a>
+    </p>
+    <p class="mt-2 text-sm text-[#C9D3E3]">
+      Institution staff: <a routerLink="/login" class="underline text-white">Institution login</a>
+    </p>
+    <p class="mt-6 text-xs text-[#9FB0C9]">Need access? info&#64;ahamsys.com · +234 706 289 1305</p>
+  </div>
+</div>

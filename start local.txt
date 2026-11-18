@@ -1,0 +1,3 @@
+docker compose up -d postgres                     # in certyfi-platform
+cd backend/src/Certyfi.Api && dotnet run          # API on 5080
+cd frontend && npx ng serve --port 4200           # frontend

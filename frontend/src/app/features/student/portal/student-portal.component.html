@@ -1,0 +1,158 @@
+<app-student-shell [slug]="slug">
+  <ng-container actions>
+    <span class="hidden sm:inline text-[#C9D3E3] mr-1">{{ session.student()?.fullName }}</span>
+    <button type="button" (click)="openPasswordDialog()" class="px-3 py-1.5 rounded-lg ring-1 ring-inset ring-white/25 hover:bg-white/10 cursor-pointer">Password</button>
+    <button type="button" (click)="signOut()" class="px-3 py-1.5 rounded-lg ring-1 ring-inset ring-white/25 hover:bg-white/10 cursor-pointer">Sign out</button>
+  </ng-container>
+
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-sm text-gray-600">Hello{{ session.student()?.fullName ? ', ' + session.student()!.fullName : '' }}</p>
+      <h1 class="font-serif text-3xl sm:text-4xl font-semibold">Your certificates</h1>
+    </div>
+    @if (!loading() && certificates().length) {
+      <p class="text-sm text-gray-600">{{ filtered().length }} of {{ certificates().length }}</p>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="mt-8 text-sm text-gray-500">Loading...</p>
+  } @else if (error()) {
+    <p class="mt-8 text-sm text-red-700" role="alert">{{ error() }}</p>
+  } @else if (certificates().length === 0) {
+    <div class="mt-8 bg-white rounded-2xl border border-[#DCE2EA] p-8 text-center">
+      <p class="text-lg font-semibold">No certificates yet</p>
+      <p class="mt-1 text-sm text-gray-600">When your institution issues you a certificate, it appears here and you get an email.</p>
+    </div>
+  } @else {
+    <!-- Search -->
+    <div class="mt-6 bg-white rounded-2xl border border-[#DCE2EA] p-4 flex flex-wrap gap-3 items-center">
+      <div class="relative flex-1 min-w-56">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+        <input type="search" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search title, code, roll number, course, grade…" aria-label="Search your certificates"
+          class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#15223B] focus:border-transparent" />
+      </div>
+      <div class="flex gap-3 w-full sm:w-auto">
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" aria-label="Status"
+        class="flex-1 min-w-0 sm:flex-none px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#15223B]">
+        <option value="all">All statuses</option>
+        <option value="issued">Issued</option>
+        <option value="waiting">Waiting (payment or approval)</option>
+        <option value="other">Not issued or withdrawn</option>
+      </select>
+      <select [ngModel]="yearFilter()" (ngModelChange)="yearFilter.set($event)" aria-label="Year"
+        class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#15223B]">
+        <option value="all">All years</option>
+        @for (y of years(); track y) { <option [value]="y">{{ y }}</option> }
+      </select>
+      </div>
+    </div>
+
+    @if (filtered().length === 0) {
+      <div class="mt-6 bg-white rounded-2xl border border-[#DCE2EA] p-8 text-center">
+        <p class="font-semibold">No certificates match</p>
+        <button type="button" (click)="clearSearch()" class="mt-2 text-sm underline underline-offset-4 cursor-pointer">Clear the search</button>
+      </div>
+    }
+
+    <ul class="mt-5 grid gap-4 md:grid-cols-2">
+      @for (c of filtered(); track c.id) {
+        <li class="bg-white rounded-2xl border border-[#DCE2EA] p-5 flex flex-col">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-lg leading-snug">{{ c.title }}</p>
+              <p class="text-xs text-gray-500 mt-1">
+                @switch (c.status) {
+                  @case ('AwaitingPayment') {
+                    Requested {{ c.createdAt | date: 'mediumDate' }} · {{ c.paymentDueAt ? 'pay by ' + (c.paymentDueAt | date: 'd MMM y') + ' to have it issued' : 'pay to have it issued' }}
+                  }
+                  @case ('PendingApproval') { @if (c.paidAt) { Paid {{ c.paidAt | date: 'mediumDate' }} · your institution is reviewing it } @else { Your institution is reviewing it } }
+                  @case ('Rejected') { Not approved{{ c.rejectionReason ? ': ' + c.rejectionReason : '' }} }
+                  @case ('Cancelled') { {{ c.cancelledForNonPayment ? "It wasn't paid for in time, so the request was cancelled" : "The request was cancelled; it won't be issued" }} }
+                  @default {
+                    Issued {{ c.issuedAt | date: 'mediumDate' }}{{ c.expiresOn ? ' · valid until ' + (c.expiresOn | date: 'mediumDate') : '' }}
+                  }
+                }
+              </p>
+            </div>
+            <span class="shrink-0 inline-flex px-2.5 py-1 rounded-full text-xs font-semibold" [class]="statusClasses(c.status)">{{ statusLabel(c.status) }}</span>
+          </div>
+
+          @if (c.fields?.length) {
+            <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+              @for (f of c.fields; track f.label) {
+                <dt class="text-gray-500">{{ f.label }}</dt>
+                <dd class="text-gray-900 break-words" [class.bg-amber-100]="matches(f.value)" [class.rounded]="matches(f.value)">{{ f.value }}</dd>
+              }
+            </dl>
+          }
+
+          <div class="mt-auto pt-4 flex flex-wrap items-center gap-3">
+            @if (c.status === 'AwaitingPayment') {
+              <button type="button" (click)="paying.set(c); payError.set(null)"
+                class="px-4 py-2 rounded-lg bg-[#D97A2B] text-[#15223B] text-sm font-semibold hover:bg-[#E8A765] cursor-pointer">Pay now</button>
+            } @else if (c.verificationPath) {
+              <a [routerLink]="c.verificationPath" target="_blank" rel="noopener"
+                class="px-4 py-2 rounded-lg bg-[#15223B] text-white text-sm font-semibold hover:bg-[#1F3052]">View certificate</a>
+              @if (c.verificationCode) {
+                <span class="text-xs text-gray-500">Code <span class="font-mono text-gray-800" [class.bg-amber-100]="matches(c.verificationCode)">{{ c.verificationCode }}</span></span>
+              }
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</app-student-shell>
+
+<app-modal [open]="paying() !== null" title="Pay for your certificate" (closed)="paying.set(null)">
+  @if (paying(); as c) {
+    <p class="text-sm text-gray-700 mb-2">{{ c.title }}</p>
+    <p class="text-sm text-gray-500 mb-4">
+      This is a test payment: no money is taken. After payment your institution approves the certificate, then it's issued.
+    </p>
+    @if (payError()) {
+      <p class="text-sm text-red-700 mb-3" role="alert">{{ payError() }}</p>
+    }
+    <div class="flex gap-2">
+      <button type="button" (click)="confirmPay()" [disabled]="payBusy()"
+        class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+        {{ payBusy() ? 'Paying...' : 'Mark as paid' }}
+      </button>
+      <button type="button" (click)="paying.set(null)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+    </div>
+  }
+</app-modal>
+
+<app-modal [open]="changingPassword()" title="Change password" (closed)="changingPassword.set(false)">
+  @if (passwordChanged()) {
+    <p class="text-sm text-green-800 mb-4">Your password has been changed.</p>
+    <button type="button" (click)="changingPassword.set(false)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Close</button>
+  } @else {
+    <form (ngSubmit)="changePassword()" #pf="ngForm" class="space-y-4">
+      <div>
+        <label for="sp-current" class="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+        <input id="sp-current" type="password" name="currentPassword" [(ngModel)]="currentPassword" required autocomplete="current-password"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="sp-new" class="block text-sm font-medium text-gray-700 mb-1">New password</label>
+        <input id="sp-new" type="password" name="newPassword" [(ngModel)]="newPassword" required minlength="10" autocomplete="new-password"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        <p class="mt-1 text-xs text-gray-500">At least 10 characters.</p>
+      </div>
+      @if (passwordError()) {
+        <p class="text-sm text-red-700" role="alert">{{ passwordError() }}</p>
+      }
+      <div class="flex gap-2">
+        <button type="submit" [disabled]="pf.invalid || passwordBusy()"
+          class="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+          {{ passwordBusy() ? 'Saving...' : 'Change password' }}
+        </button>
+        <button type="button" (click)="changingPassword.set(false)" class="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">Cancel</button>
+      </div>
+    </form>
+  }
+</app-modal>

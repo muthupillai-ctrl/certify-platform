@@ -1,0 +1,30 @@
+SuperAdmin (platform-level, no tenant) — login via POST /api/v1/platform/auth/login, no X-Tenant-Slug header needed:
+
+Email: muthupillai@gmail.com
+Password: oXy7n9VrpC3HZ3+ucDRiKaCI
+Tenant: acme-university — login via POST /api/v1/auth/login with header X-Tenant-Slug: acme-university:
+
+Email: admin@acme.edu
+Password: AdminTest@1234
+Role: InstitutionAdmin
+Code : acme-university
+Tenant: beta-college — same login endpoint, header X-Tenant-Slug: beta-college:
+
+Email: admin@beta.edu
+Password: BetaAdmin123!
+Role: InstitutionAdmin
+
+beta-college + admin@beta.edu / BetaAdmin123!
+
+One thing I noticed while taking the phone screenshot: 
+after scanning, the page shows the certificate but no 
+clear "✓ Valid" message at the top. 
+
+The status only shows for suspended, revoked or expired 
+certificates, and the signature check sits further down. 
+
+An employer scanning on a phone expects an immediate 
+green "Valid, issued by Example Institute of Technology". 
+I'd add a status banner at the top of the verification 
+page. It's a small change I can make alongside the next 
+frontend work.

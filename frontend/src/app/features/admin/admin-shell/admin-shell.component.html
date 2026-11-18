@@ -1,0 +1,245 @@
+<div class="h-screen flex bg-[#f8fafc] text-[#0f172a] overflow-hidden print:h-auto print:overflow-visible print:bg-white">
+  <!-- ============ SIDEBAR ============ -->
+  <div class="w-[236px] shrink-0 h-full bg-white border-r border-gray-200 flex flex-col print:hidden">
+    <div class="px-[18px] pt-5 pb-4 flex items-center gap-2.5 border-b border-gray-100">
+      <div class="w-8 h-8 rounded-full bg-[#7a2331] flex items-center justify-center shrink-0 shadow-[inset_0_0_0_1.5px_#dcae4a]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" class="w-[15px] h-[15px]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="m9 14.5-1.5 6.5 4.5-2 4.5 2-1.5-6.5" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-[15px] font-bold leading-tight">Certyfi</div>
+        @if (auth.currentUser()?.tenant_slug; as slug) {
+          <div class="text-[11px] text-gray-400 leading-tight">{{ slug }}</div>
+        }
+      </div>
+    </div>
+
+    <nav class="px-3 py-3.5 flex flex-col gap-0.5 overflow-y-auto">
+      <a routerLink="/admin/dashboard" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5h6.75V3.75H3.75v9.75Zm0 6.75h6.75v-4.5H3.75v4.5Zm10.5 0h6.75V10.5h-6.75v9.75Zm0-16.5v4.5h6.75v-4.5h-6.75Z" />
+        </svg>
+        Dashboard
+      </a>
+      <a routerLink="/admin/certificates" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        Certificates
+        @if (activity.summary()?.pendingForMe; as pending) {
+          <span class="ml-auto min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-semibold text-center leading-none"
+            [attr.title]="pending + ' waiting for your approval'" [attr.aria-label]="pending + ' waiting for your approval'">{{ pending }}</span>
+        }
+      </a>
+      @if (auth.hasRole('InstitutionAdmin') || auth.hasRole('Registrar')) {
+        <a routerLink="/admin/students" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+          </svg>
+          Students
+        </a>
+      }
+      @if (auth.hasRole('InstitutionAdmin') || auth.hasRole('Registrar') || auth.hasRole('Approver')) {
+        <!-- Digitising paper certificates from a spreadsheet. -->
+        <a routerLink="/admin/imports" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+          </svg>
+          Import paper
+          @if (activity.summary()?.importsForMe; as waiting) {
+            <span class="ml-auto min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-semibold text-center leading-none"
+              [attr.title]="waiting + ' import(s) waiting for your approval'" [attr.aria-label]="waiting + ' imports waiting for your approval'">{{ waiting }}</span>
+          }
+        </a>
+      }
+      @if (auth.hasRole('InstitutionAdmin') || auth.hasRole('Approver')) {
+        <!-- Suspend / revoke: kept apart from everyday certificate work. -->
+        <a routerLink="/admin/revoke-suspend" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
+          </svg>
+          Revoke &amp; suspend
+          @if (activity.summary()?.revocationsForMe; as waiting) {
+            <span class="ml-auto min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[11px] font-semibold text-center leading-none"
+              [attr.title]="waiting + ' revocation request(s) waiting for your approval'" [attr.aria-label]="waiting + ' revocation requests waiting for your approval'">{{ waiting }}</span>
+          }
+        </a>
+      }
+      <a routerLink="/admin/achievements" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9a9.06 9.06 0 0 1 1.5-4.5h6a9.06 9.06 0 0 1 1.5 4.5ZM12 15a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z" />
+        </svg>
+        Achievements
+      </a>
+
+      @if (auth.hasRole('InstitutionAdmin')) {
+        <a routerLink="/admin/templates" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+          </svg>
+          Templates
+        </a>
+        <a routerLink="/admin/audit" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+          </svg>
+          Approvals &amp; audit
+        </a>
+        <a routerLink="/admin/signatories" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+          </svg>
+          Signatories
+        </a>
+        <a routerLink="/admin/users" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+            />
+          </svg>
+          Users
+        </a>
+        <a routerLink="/admin/portal-banners" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+          </svg>
+          Portal banners
+        </a>
+        <a routerLink="/admin/api-keys" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
+            />
+          </svg>
+          API keys
+        </a>
+      }
+
+      @if (auth.hasRole('InstitutionAdmin') || auth.hasRole('Registrar') || auth.hasRole('Approver')) {
+        <a routerLink="/admin/verification" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12.75 11.25 15 15 9.75M12 3c-2.892 2.06-5.68 2.5-6.75 2.5-.243 6.25 1.5 11.5 6.75 15.5 5.25-4 6.993-9.25 6.75-15.5C17.68 5.5 14.892 5.06 12 3Z"
+            />
+          </svg>
+          Verification
+        </a>
+      }
+
+      @if (auth.hasRole('InstitutionAdmin')) {
+        <a routerLink="/admin/reports" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125h4.5v6.75H3v-6.75Zm6.75-6.75h4.5v13.5h-4.5V6.375Zm6.75 3.375h4.5v10.125h-4.5V9.75Z" />
+          </svg>
+          Reports
+        </a>
+
+        <div class="h-px bg-gray-100 my-1.5"></div>
+
+        <a routerLink="/admin/settings" routerLinkActive="bg-[#0f172a] text-white" class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-[14px] font-medium text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+            />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+          Settings
+        </a>
+      }
+    </nav>
+
+    <div class="mt-auto px-[18px] py-4 border-t border-gray-100">
+      <a href="/help/institution" target="_blank" rel="noopener" class="mb-3 flex items-center gap-2 text-[14px] font-medium text-gray-600 hover:text-gray-900">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-[17px] h-[17px]" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+        </svg>
+        Help ↗
+      </a>
+      <p class="m-0 text-xs leading-relaxed text-gray-400 italic">"Every certificate, verifiable in seconds."</p>
+    </div>
+  </div>
+
+  <!-- ============ MAIN COLUMN ============ -->
+  <div class="grow min-w-0 h-full flex flex-col print:h-auto">
+    <!-- Topbar -->
+    <div class="h-[60px] shrink-0 border-b border-gray-200 bg-white flex items-center px-6 gap-4 print:hidden">
+      <label class="grow max-w-[420px] relative flex items-center">
+        <span class="absolute left-[11px] flex pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" class="w-[15px] h-[15px]">
+            <circle cx="11" cy="11" r="7" />
+            <path stroke-linecap="round" d="m20 20-3.5-3.5" />
+          </svg>
+        </span>
+        <input
+          type="search"
+          aria-label="Search certificates"
+          placeholder="Search name, email, achievement, code or ID..."
+          [value]="search.query()"
+          (input)="onSearch($any($event.target).value)"
+          (keydown.escape)="onSearch('')"
+          class="w-full box-border py-2 pr-3 pl-[34px] rounded-lg border border-gray-200 bg-[#f8fafc] text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white"
+        />
+      </label>
+      <div class="grow"></div>
+      <button
+        type="button"
+        aria-label="Notifications"
+        title="Notifications (coming soon)"
+        class="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:bg-gray-50"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.6" class="w-[17px] h-[17px]">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+          />
+        </svg>
+      </button>
+      <div class="flex items-center gap-2 border border-gray-200 bg-white rounded-lg pl-1.5 pr-2.5 py-1">
+        <span class="w-7 h-7 rounded-full bg-[#0f172a] text-white text-[11px] font-bold flex items-center justify-center">
+          {{ initials() }}
+        </span>
+        <span class="text-left">
+          <span class="block text-xs font-semibold text-gray-900 leading-tight">{{ auth.currentUser()?.email }}</span>
+          <span class="block text-[11px] text-gray-400 leading-tight">{{ roleLabel() }}</span>
+        </span>
+        <a
+          routerLink="/change-password"
+          title="Change password"
+          aria-label="Change password"
+          class="ml-1 text-gray-400 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-[15px] h-[15px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+        </a>
+        <button
+          type="button"
+          (click)="logout()"
+          title="Sign out"
+          aria-label="Sign out"
+          class="ml-1 text-gray-400 hover:text-gray-700 cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-[15px] h-[15px]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <main class="grow min-h-0 overflow-y-auto px-6 py-6 print:overflow-visible print:p-0">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

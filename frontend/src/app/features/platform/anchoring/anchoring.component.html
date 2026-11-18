@@ -1,0 +1,344 @@
+<h1 class="text-xl font-semibold text-gray-900 mb-2">Anchoring</h1>
+<p class="text-sm text-gray-600 mb-6 max-w-2xl">
+  Each tenant's ledger is checkpointed to Bitcoin via OpenTimestamps automatically (about hourly), and checked for
+  confirmation every few hours. Use this page to run either step immediately and to troubleshoot checkpoints that
+  aren't confirming.
+</p>
+
+<!-- Summary: click a count to filter the checkpoint list -->
+@if (status(); as s) {
+  <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 mb-6">
+    <button type="button" (click)="showFilter('attention')" class="text-left bg-white border rounded-lg p-4 cursor-pointer hover:border-gray-400"
+      [class.border-amber-300]="s.counts.needsAttention > 0" [class.border-gray-200]="s.counts.needsAttention === 0">
+      <p class="text-2xl font-semibold" [class.text-amber-700]="s.counts.needsAttention > 0" [class.text-gray-900]="s.counts.needsAttention === 0">
+        {{ s.counts.needsAttention }}
+      </p>
+      <p class="text-xs text-gray-500">Need attention</p>
+    </button>
+    <button type="button" (click)="showFilter('pending')" class="text-left bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400">
+      <p class="text-2xl font-semibold text-gray-900">{{ s.counts.pending }}</p>
+      <p class="text-xs text-gray-500">Pending</p>
+    </button>
+    <button type="button" (click)="showFilter('confirmed')" class="text-left bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400">
+      <p class="text-2xl font-semibold text-gray-900">{{ s.counts.confirmed }}</p>
+      <p class="text-xs text-gray-500">Confirmed on Bitcoin</p>
+    </button>
+    <button type="button" (click)="showFilter('failed')" class="text-left bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-gray-400">
+      <p class="text-2xl font-semibold" [class.text-red-700]="s.counts.failed > 0" [class.text-gray-900]="s.counts.failed === 0">{{ s.counts.failed }}</p>
+      <p class="text-xs text-gray-500">Failed</p>
+    </button>
+  </div>
+}
+
+<div class="grid gap-4 md:grid-cols-2 mb-6">
+  <!-- Background job -->
+  <div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h2 class="text-sm font-semibold text-gray-900 mb-3">Background job</h2>
+    @if (status(); as s) {
+      @if (!s.backgroundJobStartedAt) {
+        <p class="text-sm text-amber-700 mb-3">Not started yet. It starts about 30 seconds after the API starts.</p>
+      } @else {
+        <p class="text-xs text-gray-500 mb-3">
+          Running since {{ s.backgroundJobStartedAt | date: 'medium' }}: checkpoints every {{ s.checkpointIntervalMinutes }} min,
+          confirmation checks every {{ s.upgradeIntervalMinutes / 60 }} h.
+        </p>
+        @if (jobStalled()) {
+          <p class="text-sm text-red-700 mb-3">The last confirmation check is overdue; the job may have stopped. Check the backend logs.</p>
+        }
+      }
+      <dl class="text-sm space-y-3">
+        @for (item of [{ label: 'Last checkpoint run', run: s.lastCheckpointRun, noun: 'created' }, { label: 'Last confirmation check', run: s.lastUpgradeRun, noun: 'confirmed' }]; track item.label) {
+          <div>
+            <dt class="text-xs font-medium text-gray-500">{{ item.label }}</dt>
+            @if (item.run; as run) {
+              <dd class="text-gray-900">
+                {{ age(run.finishedAt) }} ({{ run.trigger | lowercase }}) · {{ run.tenantsProcessed }} tenant(s) · {{ run.count }} {{ item.noun }}
+              </dd>
+              @for (e of run.tenantErrors; track e) {
+                <dd class="text-xs text-red-700">{{ e }}</dd>
+              }
+            } @else {
+              <dd class="text-gray-500">Not run since the API started ({{ s.processStartedAt | date: 'short' }}).</dd>
+            }
+          </div>
+        }
+      </dl>
+    } @else {
+      <p class="text-sm text-gray-500">Loading...</p>
+    }
+    <div class="flex flex-wrap gap-2 mt-4">
+      <button type="button" (click)="checkpointNow()" [disabled]="running() !== null"
+        class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+        {{ running() === 'checkpoint' ? 'Checkpointing...' : 'Checkpoint now' }}
+      </button>
+      <button type="button" (click)="upgradeNow()" [disabled]="running() !== null"
+        class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+        {{ running() === 'upgrade' ? 'Checking...' : 'Check all for confirmations' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Connectivity -->
+  <div class="bg-white border border-gray-200 rounded-lg p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-900">Connectivity</h2>
+      <button type="button" (click)="testConnections()" [disabled]="probing()"
+        class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-900 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
+        {{ probing() ? 'Testing...' : 'Test connections' }}
+      </button>
+    </div>
+    @if (connectivity(); as c) {
+      <table class="w-full text-sm">
+        <tbody>
+          @for (p of c.calendars.concat([c.blockExplorer]); track p.url) {
+            <tr class="border-b border-gray-100 last:border-0 align-top">
+              <td class="py-1.5 pr-2">
+                <span class="inline-block w-2 h-2 rounded-full mr-1.5" [class.bg-green-500]="p.ok" [class.bg-red-500]="!p.ok"></span>
+                <span class="sr-only">{{ p.ok ? 'OK' : 'Failing' }}</span>
+                {{ host(p.url) }}
+              </td>
+              <td class="py-1.5 text-right text-gray-500 whitespace-nowrap">{{ p.elapsedMs }} ms</td>
+            </tr>
+            @if (!p.ok) {
+              <tr><td colspan="2" class="pb-2 text-xs text-red-700">{{ p.error ?? ('HTTP ' + p.httpStatus) }}</td></tr>
+            }
+          }
+        </tbody>
+      </table>
+      @if (c.bitcoinTipHeight) {
+        <p class="text-xs text-gray-500 mt-2">Latest Bitcoin block: {{ c.bitcoinTipHeight }}</p>
+      }
+      <p class="text-xs text-gray-500 mt-1">One calendar failing is fine; each checkpoint is submitted to all four.</p>
+    } @else {
+      <p class="text-sm text-gray-500">Checks the four timestamp calendar servers and the Bitcoin block explorer from the API server.</p>
+    }
+  </div>
+</div>
+
+@if (message()) {
+  <p class="mb-5 text-sm max-w-2xl" [class.text-green-700]="!isError()" [class.text-red-700]="isError()">
+    {{ message() }}
+  </p>
+}
+
+<!-- Checkpoints -->
+<div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+  <h2 class="text-base font-semibold text-gray-900">Checkpoints</h2>
+  <div class="flex gap-2">
+    <select [(ngModel)]="filter" (ngModelChange)="loadRows()" aria-label="Status"
+      class="px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white">
+      <option value="attention">Needs attention</option>
+      <option value="all">All</option>
+      <option value="pending">Pending</option>
+      <option value="confirmed">Confirmed</option>
+      <option value="failed">Failed</option>
+    </select>
+    <select [(ngModel)]="tenantSlug" (ngModelChange)="loadRows()" aria-label="Tenant"
+      class="px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white">
+      <option value="">All tenants</option>
+      @for (t of tenants(); track t.id) {
+        <option [value]="t.slug">{{ t.name }}</option>
+      }
+    </select>
+    <button type="button" (click)="loadRows(); loadStatus()" class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 cursor-pointer">
+      Refresh
+    </button>
+  </div>
+</div>
+
+@if (loadingRows()) {
+  <p class="text-sm text-gray-500">Loading checkpoints...</p>
+} @else if (rowsError()) {
+  <p class="text-sm text-red-700">{{ rowsError() }}</p>
+} @else if (rows().length === 0) {
+  <p class="text-sm text-gray-500">
+    {{ filter === 'attention' ? 'Nothing needs attention.' : 'No checkpoints match.' }}
+  </p>
+} @else {
+  <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-3 py-2.5 font-medium text-gray-500">Tenant</th>
+          <th class="text-left px-3 py-2.5 font-medium text-gray-500">Status</th>
+          <th class="text-left px-3 py-2.5 font-medium text-gray-500">Last check</th>
+          <th class="px-3 py-2.5"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-gray-100 last:border-0 align-top">
+            <td class="px-3 py-3">
+              <p class="text-gray-900">{{ row.tenantName }}</p>
+              <p class="text-xs text-gray-500">Ledger up to #{{ row.upToSequenceNumber }} · created {{ age(row.createdAt) }}</p>
+            </td>
+            <td class="px-3 py-3">
+              @switch (row.status) {
+                @case ('Confirmed') {
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                    [class.bg-green-100]="row.merkleRootVerified" [class.text-green-800]="row.merkleRootVerified"
+                    [class.bg-amber-100]="!row.merkleRootVerified" [class.text-amber-800]="!row.merkleRootVerified">
+                    {{ row.merkleRootVerified ? 'Confirmed' : 'Confirmed, not verified' }}
+                  </span>
+                  @if (row.bitcoinBlockHeight) {
+                    <p class="text-xs mt-1">
+                      <a [href]="'https://blockstream.info/block-height/' + row.bitcoinBlockHeight" target="_blank" rel="noopener"
+                        class="text-gray-600 underline hover:text-gray-900">Block {{ row.bitcoinBlockHeight }}</a>
+                    </p>
+                  }
+                }
+                @case ('Pending') {
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Pending</span>
+                }
+                @default {
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{{ row.status }}</span>
+                }
+              }
+              @if (row.attentionReason) {
+                <p class="text-xs text-amber-700 mt-1 max-w-xs">{{ row.attentionReason }}</p>
+              }
+            </td>
+            <td class="px-3 py-3 text-xs text-gray-600 max-w-sm">
+              @if (row.lastCheckedAt) {
+                <p class="text-gray-900">{{ age(row.lastCheckedAt) }} · {{ row.checkAttempts }} check(s)</p>
+                <p>{{ row.lastCheckResult }}</p>
+              } @else {
+                <p>Not checked yet</p>
+              }
+            </td>
+            <td class="px-3 py-3 text-right whitespace-nowrap">
+              <div class="flex flex-col items-end gap-1">
+                <button type="button" (click)="diagnose(row)" class="text-sm text-gray-900 underline hover:no-underline cursor-pointer">Diagnose</button>
+                @if (row.status === 'Pending') {
+                  <button type="button" (click)="checkOne(row)" [disabled]="busyRowId() === row.id"
+                    class="text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 cursor-pointer">
+                    {{ busyRowId() === row.id ? 'Checking...' : 'Check now' }}
+                  </button>
+                }
+                @if (row.status === 'Confirmed' && !row.merkleRootVerified) {
+                  <button type="button" (click)="reverify(row)" [disabled]="busyRowId() === row.id"
+                    class="text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 cursor-pointer">
+                    {{ busyRowId() === row.id ? 'Verifying...' : 'Re-verify' }}
+                  </button>
+                }
+                <button type="button" (click)="downloadProof(row)" class="text-sm text-gray-600 hover:text-gray-900 cursor-pointer">Proof (.ots)</button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Diagnosis -->
+<app-modal [open]="diagnosing() !== null" title="Checkpoint diagnosis" maxWidthClass="max-w-3xl" (closed)="closeDiagnosis()">
+  @if (diagnosing(); as row) {
+    <p class="text-xs text-gray-500 mb-4">
+      {{ row.tenantName }} · ledger up to #{{ row.upToSequenceNumber }} · created {{ row.createdAt | date: 'medium' }}.
+      Read-only: nothing is saved unless you use the buttons below.
+    </p>
+    @if (diagnosisError()) {
+      <p class="text-sm text-red-700">{{ diagnosisError() }}</p>
+    }
+    @if (diagnosis(); as d) {
+      <p class="text-sm font-medium mb-4"
+        [class.text-green-700]="d.summary === 'Everything checks out.'" [class.text-amber-800]="d.summary !== 'Everything checks out.'">
+        {{ d.summary }}
+      </p>
+
+      <ol class="space-y-2 mb-5">
+        @for (step of d.steps; track step.name) {
+          <li class="flex gap-3 text-sm">
+            <span class="shrink-0 w-14 text-center rounded px-1.5 py-0.5 text-xs font-medium uppercase"
+              [class.bg-green-100]="step.status === 'ok'" [class.text-green-800]="step.status === 'ok'"
+              [class.bg-gray-100]="step.status === 'info'" [class.text-gray-700]="step.status === 'info'"
+              [class.bg-amber-100]="step.status === 'warn'" [class.text-amber-800]="step.status === 'warn'"
+              [class.bg-red-100]="step.status === 'fail'" [class.text-red-800]="step.status === 'fail'">{{ step.status }}</span>
+            <span><span class="font-medium text-gray-900">{{ step.name }}.</span> <span class="text-gray-700">{{ step.detail }}</span></span>
+          </li>
+        }
+      </ol>
+
+      @if (d.calendars.length > 0) {
+        <h3 class="text-sm font-semibold text-gray-900 mb-2">Calendar servers (asked just now)</h3>
+        <div class="overflow-x-auto mb-5">
+          <table class="w-full text-xs">
+            <thead class="text-gray-500 border-b border-gray-200">
+              <tr>
+                <th class="text-left py-1.5 pr-2 font-medium">Calendar</th>
+                <th class="text-left py-1.5 pr-2 font-medium">Commitment asked about</th>
+                <th class="text-left py-1.5 pr-2 font-medium">Answer</th>
+                <th class="text-right py-1.5 font-medium">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of d.calendars; track c.calendarUrl + c.commitmentHex) {
+                <tr class="border-b border-gray-100 last:border-0 align-top">
+                  <td class="py-1.5 pr-2 text-gray-900">{{ host(c.calendarUrl) }}</td>
+                  <td class="py-1.5 pr-2 font-mono text-gray-600" [title]="c.commitmentHex">{{ short(c.commitmentHex) }}</td>
+                  <td class="py-1.5 pr-2">
+                    @switch (c.status) {
+                      @case ('Upgraded') { <span class="text-green-700">{{ c.hasBitcoinAttestation ? 'Bitcoin attestation' : 'More proof data' }}</span> }
+                      @case ('Pending') { <span class="text-gray-700">Not confirmed yet (404)</span> }
+                      @case ('Error') { <span class="text-red-700">{{ c.error ?? ('HTTP ' + c.httpStatus) }}</span> }
+                      @default { <span class="text-gray-500">{{ c.error }}</span> }
+                    }
+                  </td>
+                  <td class="py-1.5 text-right text-gray-500">{{ c.elapsedMs }} ms</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (d.bitcoinBlock; as b) {
+        <h3 class="text-sm font-semibold text-gray-900 mb-2">Bitcoin block check</h3>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs mb-5">
+          <dt class="text-gray-500">Proof expects merkle root</dt>
+          <dd class="font-mono text-gray-900 break-all">{{ b.expectedMerkleRootHex }}</dd>
+          <dt class="text-gray-500">Block explorer reports</dt>
+          <dd class="font-mono break-all" [class.text-gray-900]="b.verified" [class.text-red-700]="!b.verified">
+            {{ b.explorerMerkleRootHex ?? ('unavailable: ' + b.error) }}
+          </dd>
+          @if (b.blockHash) {
+            <dt class="text-gray-500">Block</dt>
+            <dd class="font-mono break-all">
+              <a [href]="'https://blockstream.info/block/' + b.blockHash" target="_blank" rel="noopener" class="underline text-gray-700">{{ b.blockHash }}</a>
+            </dd>
+          }
+        </dl>
+      }
+
+      <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+        @if (row.status === 'Pending') {
+          <button type="button" (click)="checkOne(row)" [disabled]="busyRowId() === row.id"
+            class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+            {{ busyRowId() === row.id ? 'Checking...' : 'Check now' }}
+          </button>
+        }
+        @if (row.status === 'Confirmed' && !row.merkleRootVerified) {
+          <button type="button" (click)="reverify(row)" [disabled]="busyRowId() === row.id"
+            class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+            {{ busyRowId() === row.id ? 'Verifying...' : 'Re-verify against Bitcoin' }}
+          </button>
+        }
+        <button type="button" (click)="downloadProof(row)"
+          class="px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 cursor-pointer">
+          Download proof (.ots)
+        </button>
+        <button type="button" (click)="diagnose(row)"
+          class="px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 cursor-pointer">
+          Run again
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">
+        To check a proof independently of Certyfi: install the OpenTimestamps client (<code>pip install opentimestamps-client</code>) and run
+        <code>ots info &lt;file&gt;.ots</code>, or <code>ots verify</code> with a Bitcoin node.
+      </p>
+    } @else if (!diagnosisError()) {
+      <p class="text-sm text-gray-500">Running checks (this contacts the calendar servers and block explorer)...</p>
+    }
+  }
+</app-modal>

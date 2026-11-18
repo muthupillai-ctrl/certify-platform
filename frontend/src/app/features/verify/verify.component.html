@@ -1,0 +1,219 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-10 print:block print:bg-white print:p-0 print:min-h-0">
+  <div
+    class="w-full print:max-w-none"
+    [class.max-w-2xl]="credential()?.templateKind !== 'MarksCard'"
+    [class.max-w-3xl]="credential()?.templateKind === 'MarksCard'"
+  >
+    @switch (state()) {
+      @case ('loading') {
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <p class="text-sm text-gray-500">Verifying credential...</p>
+        </div>
+      }
+      @case ('result') {
+        @if (credential(); as c) {
+          <!-- The answer first: a verifier scanning on a phone sees at once
+               whether the certificate is valid, before the artwork. -->
+          @let awarded = c.originalIssueDate ?? c.issuedAt;
+          <div role="status" class="mb-4 rounded-lg border px-4 py-3 print:hidden"
+            [class.bg-green-50]="c.status === 'Active'" [class.border-green-300]="c.status === 'Active'"
+            [class.bg-gray-50]="c.status === 'Expired'" [class.border-gray-300]="c.status === 'Expired'"
+            [class.bg-orange-50]="c.status === 'Suspended'" [class.border-orange-300]="c.status === 'Suspended'"
+            [class.bg-red-50]="c.status === 'Revoked'" [class.border-red-300]="c.status === 'Revoked'">
+            @switch (c.status) {
+              @case ('Active') {
+                <p class="text-lg font-semibold text-green-800">✓ Valid certificate</p>
+                <p class="text-sm text-green-900">
+                  {{ c.institutionName }} issued it to {{ c.recipientName }}{{ awarded ? ' on ' + (awarded | date: 'longDate') : '' }}.
+                  {{ c.expiresOn ? 'Valid until ' + (c.expiresOn | date: 'longDate') + '.' : '' }}
+                </p>
+              }
+              @case ('Expired') {
+                <p class="text-lg font-semibold text-gray-800">Expired</p>
+                <p class="text-sm text-gray-700">
+                  Genuine, issued by {{ c.institutionName }} to {{ c.recipientName }}, but it was only valid until {{ c.expiresOn | date: 'longDate' }}.
+                </p>
+              }
+              @case ('Suspended') {
+                <p class="text-lg font-semibold text-orange-800">✗ Suspended: not valid at the moment</p>
+                <p class="text-sm text-orange-900">{{ c.institutionName }} has suspended this certificate. Contact them for details.</p>
+              }
+              @case ('Revoked') {
+                <p class="text-lg font-semibold text-red-800">✗ Revoked: no longer valid</p>
+                <p class="text-sm text-red-900">{{ c.institutionName }} has permanently withdrawn this certificate.</p>
+              }
+            }
+          </div>
+
+          <div #certificate>
+            <app-certificate-preview [data]="c" [qrUrl]="qrData(c)" [qrFallbackUrl]="pageUrl" [credentialId]="c.id" [verificationCode]="c.verificationCode" />
+          </div>
+
+          @if (c.originalIssueDate) {
+            <p class="mt-4 px-4 py-3 rounded-lg bg-white border border-gray-200 text-sm text-gray-700 print:hidden">
+              <span class="font-medium text-gray-900">Originally issued on paper</span> on {{ c.originalIssueDate | date: 'longDate' }}{{ c.legacyCertificateNumber ? ' (certificate no. ' + c.legacyCertificateNumber + ')' : '' }}.
+              {{ c.institutionName }} digitally re-issued and signed it on {{ c.issuedAt | date: 'longDate' }}; the digital signature and timestamps date from then.
+            </p>
+          }
+
+          <div class="mt-4 flex flex-wrap items-center justify-center gap-2 print:hidden">
+            <button type="button" (click)="downloadPdf(c)" [disabled]="downloadingPdf()"
+              class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">
+              {{ downloadingPdf() ? 'Preparing PDF...' : 'Download PDF' }}
+            </button>
+            @if (canDownloadCredential(c)) {
+              <a [href]="credentialDownloadUrl()" download
+                class="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50">
+                Download digital credential
+              </a>
+              <a [href]="linkedInUrl(c)" target="_blank" rel="noopener"
+                class="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50">
+                Add to LinkedIn
+              </a>
+            }
+            <button type="button" (click)="showQr.set(true)"
+              class="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50 cursor-pointer">
+              Show QR code
+            </button>
+            <button type="button" (click)="print()" class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer">
+              Print
+            </button>
+          </div>
+          @if (actionError()) {
+            <p class="mt-2 text-center text-sm text-red-700 print:hidden">{{ actionError() }}</p>
+          }
+          @if (canDownloadCredential(c)) {
+            <p class="mt-2 text-center text-xs text-gray-500 print:hidden">
+              The digital credential is an Open Badges 3.0 file signed by {{ c.institutionName }}, for badge wallets and
+              <a routerLink="/verify/file" class="underline">file verification</a>.
+            </p>
+          }
+          <p class="mt-2 text-center text-xs text-gray-500 print:hidden">
+            <a routerLink="/help/verifiers" class="underline">What does this result mean?</a>
+          </p>
+
+          @if (c.institutionProfile; as issuer) {
+            <div class="mt-4 border border-gray-200 rounded-lg p-4 bg-white print:hidden">
+              <h3 class="text-sm font-semibold text-gray-900 mb-2">About the issuer</h3>
+              <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
+                <dt class="text-gray-500">Institution</dt>
+                <dd class="text-gray-900">{{ issuer.legalName ?? c.institutionName }}</dd>
+                @if (issuer.city || issuer.country) {
+                  <dt class="text-gray-500">Location</dt>
+                  <dd class="text-gray-900">{{ location(issuer.city, issuer.country) }}</dd>
+                }
+                @if (issuer.registrationNumber) {
+                  <dt class="text-gray-500">Registration no.</dt>
+                  <dd class="text-gray-900">{{ issuer.registrationNumber }}</dd>
+                }
+                @if (issuer.accreditationBody) {
+                  <dt class="text-gray-500">Accredited by</dt>
+                  <dd class="text-gray-900">{{ issuer.accreditationBody }}</dd>
+                }
+                @if (issuer.websiteUrl) {
+                  <dt class="text-gray-500">Website</dt>
+                  <dd><a [href]="issuer.websiteUrl" target="_blank" rel="noopener noreferrer" class="text-gray-900 underline break-all">{{ issuer.websiteUrl }}</a></dd>
+                }
+              </dl>
+              @if (issuer.about) {
+                <p class="mt-3 text-sm text-gray-600">{{ issuer.about }}</p>
+              }
+              <p class="mt-3 text-[11px] text-gray-400">Provided by the institution.</p>
+            </div>
+          }
+
+          <div class="mt-4 print:hidden">
+            <app-signature-panel
+              [tenantSlug]="tenantSlug"
+              [canonicalHash]="c.canonicalHash"
+              [signature]="c.signature"
+              [signatureKeyId]="c.signatureKeyId"
+            />
+          </div>
+
+          <div class="mt-4 print:hidden">
+            <app-anchor-panel [tenantSlug]="tenantSlug" [credentialId]="c.id" />
+          </div>
+        }
+      }
+      @case ('offline') {
+        @if (offlineCheck(); as check) {
+          @switch (check.outcome) {
+            @case ('valid') {
+              <div class="bg-white border border-green-300 rounded-lg p-6">
+                <p class="text-xs font-semibold uppercase tracking-wide text-green-700 mb-1">Checked offline</p>
+                <h1 class="text-lg font-semibold text-gray-900 mb-4">Genuine certificate, signed by {{ check.institution.name }}</h1>
+                <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm mb-5">
+                  <dt class="text-gray-500">Awarded to</dt>
+                  <dd class="font-medium text-gray-900">{{ check.summary.recipientName }}</dd>
+                  <dt class="text-gray-500">Achievement</dt>
+                  <dd class="text-gray-900">{{ check.summary.achievementTitle }}</dd>
+                  @if (check.summary.originalIssueOn) {
+                    <dt class="text-gray-500">Issued on paper</dt>
+                    <dd class="text-gray-900">{{ check.summary.originalIssueOn | date: 'longDate' }}</dd>
+                    <dt class="text-gray-500">Digitally re-issued</dt>
+                    <dd class="text-gray-900">{{ check.summary.issuedOn | date: 'longDate' }}</dd>
+                  } @else {
+                    <dt class="text-gray-500">Issued</dt>
+                    <dd class="text-gray-900">{{ check.summary.issuedOn | date: 'longDate' }}</dd>
+                  }
+                  @if (check.summary.expiresOn) {
+                    <dt class="text-gray-500">Valid until</dt>
+                    <dd class="text-gray-900">{{ check.summary.expiresOn | date: 'longDate' }}</dd>
+                  }
+                  <dt class="text-gray-500">Certificate code</dt>
+                  <dd class="font-mono text-gray-900">
+                    {{ check.summary.code.slice(0, 4) }}-{{ check.summary.code.slice(4, 8) }}-{{ check.summary.code.slice(8) }}
+                  </dd>
+                </dl>
+                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
+                  This proves the certificate was issued as shown. It can't show whether it was later revoked or suspended,
+                  or has expired since: check again when you're online for its current status.
+                </p>
+                <p class="mt-3 text-xs text-gray-500">
+                  Checked with {{ check.institution.name }}'s key saved on this device on {{ check.institution.fetchedAt | date: 'mediumDate' }}.
+                </p>
+              </div>
+            }
+            @case ('invalid') {
+              <div class="bg-white border border-red-300 rounded-lg p-6">
+                <p class="text-xs font-semibold uppercase tracking-wide text-red-700 mb-1">Checked offline</p>
+                <h1 class="text-lg font-semibold text-red-800 mb-2">Not a valid certificate</h1>
+                <p class="text-sm text-gray-700">{{ check.reason }}</p>
+              </div>
+            }
+            @case ('no-key') {
+              <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h1 class="text-lg font-semibold text-gray-900 mb-2">Can't verify while offline</h1>
+                <p class="text-sm text-gray-700">{{ check.reason }}</p>
+              </div>
+            }
+          }
+        }
+      }
+      @case ('not-found') {
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <p class="text-sm text-gray-600">This verification link is invalid or the credential does not exist.</p>
+          <a routerLink="/verify" class="mt-3 inline-block text-sm text-gray-900 underline">Look up a certificate by its code</a>
+        </div>
+      }
+      @case ('error') {
+        <div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <p class="text-sm text-red-600">Something went wrong verifying this credential.</p>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Large QR for scanning from a screen: the one on the certificate is sized
+     for print and gets scaled down with the certificate to fit the page. -->
+<app-modal [open]="showQr()" title="Scan to verify" maxWidthClass="max-w-md" (closed)="showQr.set(false)">
+  @if (credential(); as c) {
+    <div class="flex flex-col items-center text-center">
+      <app-qr-code [data]="qrData(c)" [fallbackData]="pageUrl" [size]="320" />
+      <p class="mt-4 text-sm text-gray-600">Point a phone camera at this code. It also works offline in the installed Certyfi Verify app.</p>
+      <p class="mt-1 text-xs text-gray-500">Certificate code <span class="font-mono text-gray-900">{{ c.verificationCode }}</span></p>
+    </div>
+  }
+</app-modal>

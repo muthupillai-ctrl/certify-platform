@@ -1,0 +1,23 @@
+@if (open) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/50" (click)="onBackdropClick()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-h-[85vh] flex flex-col" [ngClass]="maxWidthClass">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+        <h2 class="text-base font-semibold text-gray-900">{{ title }}</h2>
+        <button
+          type="button"
+          (click)="onBackdropClick()"
+          aria-label="Close"
+          class="text-gray-400 hover:text-gray-600 cursor-pointer rounded p-1 hover:bg-gray-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-5 overflow-y-auto">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+}

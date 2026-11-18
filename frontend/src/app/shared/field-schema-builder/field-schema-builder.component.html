@@ -1,0 +1,87 @@
+<div class="flex items-center justify-between mb-2">
+  <label class="block text-sm font-medium text-gray-700">Custom fields</label>
+  <button type="button" (click)="addField()" class="text-sm text-gray-700 hover:text-gray-900 font-medium cursor-pointer">
+    + Add field
+  </button>
+</div>
+<p class="text-xs text-gray-500 mb-3">
+  Extra fields credentials will capture — e.g. roll number, or a repeating table of subjects for a marks card.
+</p>
+
+@for (field of fields; track $index) {
+  <div class="border border-gray-200 rounded-md p-3 mb-2">
+    <div class="flex items-start gap-2">
+      <input
+        type="text"
+        [(ngModel)]="field.label"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onFieldLabelChange(field)"
+        placeholder="Field label, e.g. Roll Number"
+        class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+      <select
+        [(ngModel)]="field.type"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onFieldTypeChange(field)"
+        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      >
+        <option value="text">Text</option>
+        <option value="number">Number</option>
+        <option value="date">Date</option>
+        <option value="table">Table (marks card)</option>
+      </select>
+      <button
+        type="button"
+        (click)="removeField($index)"
+        class="text-gray-400 hover:text-red-600 px-2 py-2 cursor-pointer"
+        title="Remove field"
+      >
+        &times;
+      </button>
+    </div>
+    <label class="mt-2 inline-flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+      <input type="checkbox" [(ngModel)]="field.required" [ngModelOptions]="{ standalone: true }" (ngModelChange)="fieldsChange.emit(fields)" />
+      Required: every certificate must fill this in{{ field.type === 'table' ? ' (at least one row)' : '' }}
+    </label>
+
+    @if (field.type === 'table') {
+      <div class="mt-3 pl-4 border-l-2 border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-gray-500">Columns</span>
+          <button type="button" (click)="addColumn(field)" class="text-xs text-gray-700 hover:text-gray-900 font-medium cursor-pointer">
+            + Add column
+          </button>
+        </div>
+        @for (column of field.columns; track $index) {
+          <div class="flex items-center gap-2 mb-2">
+            <input
+              type="text"
+              [(ngModel)]="column.label"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onColumnLabelChange(field, column)"
+              placeholder="Column label, e.g. Subject"
+              class="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+            <select
+              [(ngModel)]="column.type"
+              [ngModelOptions]="{ standalone: true }"
+              class="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            >
+              <option value="text">Text</option>
+              <option value="number">Number</option>
+              <option value="date">Date</option>
+            </select>
+            <button
+              type="button"
+              (click)="removeColumn(field, $index)"
+              class="text-gray-400 hover:text-red-600 px-2 py-1.5 cursor-pointer"
+              title="Remove column"
+            >
+              &times;
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

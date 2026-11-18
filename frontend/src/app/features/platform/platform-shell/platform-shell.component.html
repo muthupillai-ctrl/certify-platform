@@ -1,0 +1,32 @@
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-gray-900">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-lg font-semibold text-white">Certyfi</span>
+        <span class="text-xs font-medium text-gray-200 bg-gray-700 rounded-full px-2 py-0.5">
+          Platform Admin
+        </span>
+        <nav class="ml-6 flex items-center gap-4 text-sm">
+          <a routerLink="/platform/tenants" routerLinkActive="text-white" class="text-gray-400 hover:text-white">Tenants</a>
+          <a routerLink="/platform/anchoring" routerLinkActive="text-white" class="text-gray-400 hover:text-white">Anchoring</a>
+          <a routerLink="/platform/home-access" routerLinkActive="text-white" class="text-gray-400 hover:text-white">Home page access</a>
+          <a routerLink="/platform/users" routerLinkActive="text-white" class="text-gray-400 hover:text-white">Platform users</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-4">
+        <a routerLink="/platform/profile" routerLinkActive="text-white" class="text-sm text-gray-300 hover:text-white underline-offset-4 hover:underline" title="My profile">{{ auth.currentUser()?.email }}</a>
+        <button
+          type="button"
+          (click)="logout()"
+          class="text-sm text-gray-300 hover:text-white cursor-pointer"
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-8">
+    <router-outlet></router-outlet>
+  </main>
+</div>

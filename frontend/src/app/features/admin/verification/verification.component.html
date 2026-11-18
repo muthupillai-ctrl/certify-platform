@@ -1,0 +1,208 @@
+<div class="max-w-6xl flex flex-col gap-5">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900">Verification</h1>
+    <p class="mt-1 text-sm text-gray-600">Check a certificate someone shows you, and see how your certificates are being checked publicly.</p>
+  </div>
+
+  <!-- Check a certificate -->
+  <section class="bg-white border border-gray-200 rounded-xl p-4" aria-labelledby="check-heading">
+    <h2 id="check-heading" class="text-sm font-semibold text-gray-900">Check a certificate</h2>
+    <p class="mt-0.5 text-xs text-gray-500">
+      For an employer's call or email: enter the code (or old paper number) printed on the certificate, paste its verification link, or drop the digital credential file.
+      Checks here are not counted as public verifications.
+    </p>
+    <form class="mt-3 flex flex-wrap items-center gap-2" (ngSubmit)="check()">
+      <input name="checkInput" [(ngModel)]="checkInput" autocomplete="off" spellcheck="false" aria-label="Certificate code or verification link"
+        placeholder="K7QM-3XPD-9TWA, a paper certificate number, or https://…/verify/…"
+        class="grow min-w-[16rem] max-w-xl px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      <button type="submit" [disabled]="checking() || !checkInput.trim()"
+        class="px-4 py-2 rounded-md bg-[#0f172a] text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-40 cursor-pointer">
+        {{ checking() ? 'Checking…' : 'Check' }}
+      </button>
+      <label class="px-3 py-2 rounded-md border border-dashed text-sm text-gray-600 cursor-pointer hover:bg-gray-50"
+        [class.border-gray-900]="dragging()" [class.border-gray-300]="!dragging()"
+        (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+        Choose or drop a credential file
+        <input type="file" class="sr-only" accept=".jwt,.json,.txt,application/json" (change)="onFile($event)" />
+      </label>
+    </form>
+    @if (checkError()) {
+      <p class="mt-2 text-sm text-red-700" role="alert">{{ checkError() }}</p>
+    }
+
+    @if (checkResult(); as r) {
+      <div class="mt-4" role="status">
+        @switch (r.kind) {
+          @case ('ours') {
+            @let c = r.credential;
+            @let s = status(c);
+            @let issued = s === 'Active' || s === 'Suspended' || s === 'Revoked' || s === 'Expired';
+            <div class="border rounded-lg p-4"
+              [class.border-green-300]="s === 'Active'" [class.bg-green-50]="s === 'Active'"
+              [class.border-orange-300]="s === 'Suspended'" [class.bg-orange-50]="s === 'Suspended'"
+              [class.border-red-300]="s === 'Revoked'" [class.bg-red-50]="s === 'Revoked'"
+              [class.border-gray-300]="!['Active', 'Suspended', 'Revoked'].includes(s)" [class.bg-gray-50]="!['Active', 'Suspended', 'Revoked'].includes(s)">
+              <p class="text-base font-semibold"
+                [class.text-green-900]="s === 'Active'" [class.text-orange-900]="s === 'Suspended'" [class.text-red-900]="s === 'Revoked'" [class.text-gray-900]="!['Active', 'Suspended', 'Revoked'].includes(s)">
+                @switch (s) {
+                  @case ('Active') { ✓ Genuine and valid: issued by your institution }
+                  @case ('Suspended') { Genuine, but suspended: it is not valid at the moment }
+                  @case ('Revoked') { Genuine, but revoked: it is no longer valid }
+                  @case ('Expired') { Genuine, but expired{{ c.expiresOn ? ' on ' + (c.expiresOn | date: 'd MMM y') : '' }} }
+                  @default { Not issued: this certificate was never approved, so it would not verify publicly }
+                }
+              </p>
+              @if (r.file) {
+                <p class="mt-1 text-xs text-gray-700">The file's digital signature is valid: it hasn't been altered since it was issued.</p>
+              }
+              @if (s === 'Suspended' && c.suspensionReason) {
+                <p class="mt-1 text-sm text-orange-900">Reason: {{ c.suspensionReason }}</p>
+              }
+              @if (s === 'Revoked' && c.revocationReason) {
+                <p class="mt-1 text-sm text-red-900">Revoked{{ c.revokedAt ? ' on ' + (c.revokedAt | date: 'd MMM y') : '' }}: {{ c.revocationReason }}</p>
+              }
+              <p class="mt-3 text-xs text-gray-600">Compare these details with the certificate you were shown:</p>
+              <dl class="mt-1 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1 text-sm">
+                <dt class="text-gray-500">Recipient</dt><dd class="text-gray-900 font-medium">{{ c.recipientName }}</dd>
+                <dt class="text-gray-500">Email</dt><dd class="text-gray-900">{{ c.recipientEmail }}</dd>
+                <dt class="text-gray-500">Achievement</dt><dd class="text-gray-900">{{ c.achievementTitle }}</dd>
+                @if (issued) {
+                  <dt class="text-gray-500">Issued</dt><dd class="text-gray-900">{{ c.issuedAt | date: 'd MMM y' }}</dd>
+                  <dt class="text-gray-500">Expires</dt><dd class="text-gray-900">{{ c.expiresOn ? (c.expiresOn | date: 'd MMM y') : 'Never' }}</dd>
+                }
+                <dt class="text-gray-500">Code</dt><dd class="text-gray-900 font-mono">{{ c.verificationCode }}</dd>
+                @if (r.history) {
+                  <dt class="text-gray-500">Checked publicly</dt>
+                  <dd class="text-gray-900">{{ r.history.total }} {{ r.history.total === 1 ? 'time' : 'times' }}{{ r.history.lastVerifiedAt ? ', last on ' + (r.history.lastVerifiedAt | date: 'd MMM y, HH:mm') : '' }}</dd>
+                }
+              </dl>
+              <div class="mt-3 flex gap-3 text-sm">
+                <a [routerLink]="'/admin/certificates'" [queryParams]="{ open: c.id }" class="underline text-gray-800 hover:text-gray-900">Open certificate</a>
+                <button type="button" (click)="clearCheck()" class="underline text-gray-600 hover:text-gray-900 cursor-pointer">Check another</button>
+              </div>
+            </div>
+          }
+          @case ('other-institution') {
+            <div class="border border-gray-300 bg-gray-50 rounded-lg p-4 text-sm">
+              <p class="font-semibold text-gray-900">Not one of your certificates</p>
+              <p class="mt-1 text-gray-700">
+                It was issued by {{ r.institutionName ?? 'another institution' }} ("{{ r.slug }}")
+                @if (r.file) { and its digital signature is valid }.
+                Check its current status on the public verification page:
+              </p>
+              @if (r.credentialId) {
+                <a [href]="'/verify/' + r.slug + '/' + r.credentialId" target="_blank" rel="noopener" class="mt-2 inline-block underline text-gray-900">Open public verification page ↗</a>
+              }
+            </div>
+          }
+          @case ('not-found') {
+            <div class="border border-red-300 bg-red-50 rounded-lg p-4 text-sm">
+              <p class="font-semibold text-red-900">No certificate with this {{ r.what }} was issued by your institution</p>
+              <p class="mt-1 text-red-900">
+                Check it was typed correctly (codes never use 0, O, 1, I, L, U or V). If it was, treat the certificate as not genuine.
+              </p>
+            </div>
+          }
+          @case ('bad-file') {
+            <div class="border border-red-300 bg-red-50 rounded-lg p-4 text-sm">
+              <p class="font-semibold text-red-900">This file can't be trusted</p>
+              <p class="mt-1 text-red-900">{{ r.problem }}</p>
+            </div>
+          }
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Activity log -->
+  <section class="bg-white border border-gray-200 rounded-xl flex flex-col" aria-labelledby="activity-heading">
+    <div class="px-4 pt-3">
+      <h2 id="activity-heading" class="text-sm font-semibold text-gray-900">Public verification activity</h2>
+      <p class="mt-0.5 text-xs text-gray-500">Every time someone checked one of your certificates. Who checked is never recorded.</p>
+    </div>
+
+    <div class="px-4 py-3 flex flex-wrap items-center gap-2 text-sm">
+      <select aria-label="Period" [ngModel]="preset()" (ngModelChange)="setPreset($event)"
+        class="border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 text-gray-700 cursor-pointer">
+        @for (p of periodOptions; track p) {
+          <option [value]="p">{{ periodLabels[p] }}</option>
+        }
+      </select>
+      @if (preset() === 'custom') {
+        <input type="date" aria-label="From" [ngModel]="fromDate()" (ngModelChange)="setDate('from', $event)" class="border border-gray-200 rounded-lg px-2 py-1" />
+        <span class="text-gray-400">to</span>
+        <input type="date" aria-label="To" [ngModel]="toDate()" (ngModelChange)="setDate('to', $event)" class="border border-gray-200 rounded-lg px-2 py-1" />
+      }
+      <select aria-label="How" [ngModel]="channel()" (ngModelChange)="setFilter('channel', $event)"
+        class="border bg-white rounded-lg px-2.5 py-1.5 text-gray-700 cursor-pointer" [class.border-[#7a2331]]="channel()" [class.border-gray-200]="!channel()">
+        <option [ngValue]="null">How: any</option>
+        @for (c of channels; track c.id) {
+          <option [value]="c.id">How: {{ c.label }}</option>
+        }
+      </select>
+      <select aria-label="Result" [ngModel]="result()" (ngModelChange)="setFilter('result', $event)"
+        class="border bg-white rounded-lg px-2.5 py-1.5 text-gray-700 cursor-pointer" [class.border-[#7a2331]]="result()" [class.border-gray-200]="!result()">
+        <option [ngValue]="null">Result: all ({{ allResults() }})</option>
+        @for (r of results; track r.id) {
+          <option [value]="r.id">Result: {{ r.label }} ({{ counts()[r.id] ?? 0 }})</option>
+        }
+      </select>
+      @if ((counts()['Attention'] ?? 0) > 0 && result() !== 'Attention') {
+        <button type="button" (click)="setFilter('result', 'Attention')"
+          class="px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-800 text-xs font-medium hover:bg-red-100 cursor-pointer">
+          {{ counts()['Attention'] }} need attention
+        </button>
+      }
+      <button type="button" (click)="exportCsv()" [disabled]="exporting() || total() === 0"
+        class="ml-auto px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
+        {{ exporting() ? 'Exporting…' : 'Export CSV' }}
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="mx-4 mb-3 text-sm text-red-700" role="alert">{{ error() }}</p>
+    }
+
+    <div class="overflow-x-auto border-t border-gray-100" [class.opacity-60]="loading()">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500">
+          <tr>
+            <th scope="col" class="px-4 py-2">When</th>
+            <th scope="col" class="px-4 py-2">How</th>
+            <th scope="col" class="px-4 py-2">Result</th>
+            <th scope="col" class="px-4 py-2">Certificate</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (e of items(); track e.id) {
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap text-gray-700">{{ e.occurredAt | date: 'd MMM y, HH:mm' }}</td>
+              <td class="px-4 py-2 text-gray-700">{{ channelLabel(e.channel) }}</td>
+              <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="resultClasses(e.result)">{{ resultLabel(e.result) }}</span></td>
+              <td class="px-4 py-2">
+                @if (e.credentialId) {
+                  <a [routerLink]="'/admin/certificates'" [queryParams]="{ open: e.credentialId }" class="text-gray-900 hover:underline">{{ e.recipientName }}</a>
+                  <span class="text-xs text-gray-500"> · {{ e.achievementTitle }} · <span class="font-mono">{{ e.verificationCode }}</span></span>
+                } @else {
+                  <span class="text-xs text-red-800">A code that matched none of your certificates: mistyped, or a certificate that isn't genuine</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">{{ loading() ? 'Loading…' : 'No checks in this period.' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (total() > pageSize) {
+      <div class="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
+        <span>{{ (page() - 1) * pageSize + 1 }}–{{ page() * pageSize < total() ? page() * pageSize : total() }} of {{ total() }}</span>
+        <span class="flex gap-2">
+          <button type="button" (click)="page.set(page() - 1)" [disabled]="page() <= 1" class="px-2 py-1 border border-gray-200 rounded disabled:opacity-40 cursor-pointer">Previous</button>
+          <button type="button" (click)="page.set(page() + 1)" [disabled]="page() >= lastPage()" class="px-2 py-1 border border-gray-200 rounded disabled:opacity-40 cursor-pointer">Next</button>
+        </span>
+      </div>
+    }
+  </section>
+</div>

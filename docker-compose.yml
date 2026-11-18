@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: certyfi
+      POSTGRES_PASSWORD: certyfi_dev_only
+      POSTGRES_DB: certyfi
+    ports:
+      # Host port 5433, not 5432 — 5432 is already bound by another local
+      # project's Postgres container (ahamsys-postgres). Container-internal
+      # port stays 5432; only the host mapping changes.
+      - "5433:5432"
+    volumes:
+      - certyfi_pgdata:/var/lib/postgresql/data
+
+volumes:
+  certyfi_pgdata:

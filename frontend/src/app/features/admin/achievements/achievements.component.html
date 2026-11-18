@@ -1,0 +1,235 @@
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-semibold text-gray-900">Achievements</h1>
+  @if (auth.hasRole('Registrar') || auth.hasRole('InstitutionAdmin')) {
+    <button
+      type="button"
+      (click)="toggleForm()"
+      class="inline-flex items-center px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 cursor-pointer"
+    >
+      {{ showForm() ? 'Cancel' : 'New achievement' }}
+    </button>
+  }
+</div>
+
+@if (showForm()) {
+  <form
+    (ngSubmit)="submit()"
+    #f="ngForm"
+    class="mb-8 bg-white border border-gray-200 rounded-lg p-6 max-w-md"
+  >
+    <h2 class="text-sm font-semibold text-gray-900 mb-4">
+      {{ editingId() ? 'Amend achievement' : 'New achievement' }}
+    </h2>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+      <input
+        type="text"
+        name="title"
+        [(ngModel)]="title"
+        required
+        placeholder="e.g. B.Sc. Computer Science"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <textarea
+        name="description"
+        [(ngModel)]="description"
+        rows="2"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      ></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Criteria</label>
+      <textarea
+        name="criteriaNarrative"
+        [(ngModel)]="criteriaNarrative"
+        rows="2"
+        placeholder="What earns this achievement"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      ></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Validity period (months)</label>
+      <input
+        type="number"
+        name="validityPeriodMonths"
+        [(ngModel)]="validityPeriodMonths"
+        min="1"
+        placeholder="Leave blank for no expiry"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+    </div>
+
+    @if (!editingId()) {
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Certificate template</label>
+        <select
+          name="templateId"
+          [(ngModel)]="templateId"
+          (ngModelChange)="onTemplateChange()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+        >
+          <option value="">Start from scratch</option>
+          @for (t of templates(); track t.id) {
+            <option [value]="t.id">{{ t.name }}</option>
+          }
+        </select>
+        <p class="mt-1 text-xs text-gray-500">
+          Pre-fills the fields below as a starting point — you can still edit them before saving.
+        </p>
+      </div>
+    }
+
+    <div class="mb-4">
+      <app-field-schema-builder [(fields)]="fields" />
+    </div>
+
+    @if (errorMessage()) {
+      <p class="text-sm text-red-600 mb-4">{{ errorMessage() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="f.invalid || submitting()"
+      class="w-full px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    >
+      {{ submitting() ? 'Saving...' : editingId() ? 'Save changes' : 'Create achievement' }}
+    </button>
+  </form>
+}
+
+@if (!showForm() && errorMessage()) {
+  <p class="text-sm text-red-600 mb-4">{{ errorMessage() }}</p>
+}
+
+@if (loading()) {
+  <p class="text-sm text-gray-500">Loading achievements...</p>
+} @else if (achievements().length === 0) {
+  <p class="text-sm text-gray-500">
+    No achievements yet.
+    @if (auth.hasRole('Registrar') || auth.hasRole('InstitutionAdmin')) {
+      Create one before drafting a credential — credentials reference an achievement.
+    }
+  </p>
+} @else {
+  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Title</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Type</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Description</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Validity</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Custom fields</th>
+          <th class="text-right px-4 py-3 font-medium text-gray-500">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (achievement of achievements(); track achievement.id) {
+          <tr class="border-b border-gray-100 last:border-0">
+            <td class="px-4 py-3 text-gray-900">{{ achievement.title }}</td>
+            <td class="px-4 py-3">
+              @if (achievement.templateKind === 'MarksCard') {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Marks Card</span>
+              } @else {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Certificate</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ achievement.description || '—' }}</td>
+            <td class="px-4 py-3 text-gray-600">
+              {{ achievement.validityPeriodMonths ? achievement.validityPeriodMonths + ' months' : 'No expiry' }}
+            </td>
+            <td class="px-4 py-3 text-gray-600">
+              {{ fieldSummary(achievement) }}
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  (click)="view(achievement)"
+                  class="text-xs px-2.5 py-1.5 rounded-md bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 cursor-pointer"
+                >
+                  View
+                </button>
+                @if (auth.hasRole('Registrar') || auth.hasRole('InstitutionAdmin')) {
+                  <button
+                    type="button"
+                    (click)="edit(achievement)"
+                    class="text-xs px-2.5 py-1.5 rounded-md border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 cursor-pointer"
+                  >
+                    Amend
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-modal [open]="viewingAchievement() !== null" title="Achievement" (closed)="closeView()">
+  @if (viewingAchievement(); as a) {
+    <dl class="space-y-3 text-sm mb-4">
+      <div>
+        <dt class="text-xs text-gray-500">Title</dt>
+        <dd class="text-gray-900 font-medium">{{ a.title }}</dd>
+      </div>
+      @if (a.description) {
+        <div>
+          <dt class="text-xs text-gray-500">Description</dt>
+          <dd class="text-gray-900">{{ a.description }}</dd>
+        </div>
+      }
+      @if (a.criteriaNarrative) {
+        <div>
+          <dt class="text-xs text-gray-500">Criteria</dt>
+          <dd class="text-gray-900">{{ a.criteriaNarrative }}</dd>
+        </div>
+      }
+      <div>
+        <dt class="text-xs text-gray-500">Validity</dt>
+        <dd class="text-gray-900">{{ a.validityPeriodMonths ? a.validityPeriodMonths + ' months' : 'No expiry' }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-gray-500">Type</dt>
+        <dd>
+          @if (a.templateKind === 'MarksCard') {
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Marks Card</span>
+          } @else {
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Certificate</span>
+          }
+        </dd>
+      </div>
+    </dl>
+
+    @if (a.fieldSchema.length === 0) {
+      <p class="text-sm text-gray-500">No custom fields.</p>
+    } @else {
+      <p class="text-xs font-medium text-gray-500 mb-2">Custom fields</p>
+      <div class="space-y-3">
+        @for (field of a.fieldSchema; track field.key) {
+          <div class="border border-gray-200 rounded-md p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-900">{{ field.label }}</span>
+              <span class="text-xs text-gray-500 capitalize">{{ field.type }}</span>
+            </div>
+            @if (field.type === 'table' && field.columns) {
+              <div class="mt-2 pl-3 border-l-2 border-gray-100 space-y-1">
+                @for (column of field.columns; track column.key) {
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-gray-700">{{ column.label }}</span>
+                    <span class="text-gray-400 capitalize">{{ column.type }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</app-modal>

@@ -1,0 +1,1 @@
+import{f as c}from"./chunk-EQDQRRRY.js";function n(r,e){let o=URL.createObjectURL(r),t=document.createElement("a");t.href=o,t.download=e,t.click(),URL.revokeObjectURL(o)}function a(r,e){return c(this,null,function*(){try{return JSON.parse(yield r.error.text()).error??e}catch{return e}})}export{n as a,a as b};

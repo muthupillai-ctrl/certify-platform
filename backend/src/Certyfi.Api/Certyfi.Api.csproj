@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Certyfi.Api</RootNamespace>
+    <UserSecretsId>certyfi-api-dev-secrets</UserSecretsId>
+    <!-- XML doc comments feed the Partner API OpenAPI document. 1591 is
+         "missing XML comment" — only partner endpoints are documented. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ExcelDataReader" Version="3.9.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Certyfi.Domain\Certyfi.Domain.csproj" />
+    <ProjectReference Include="..\Certyfi.Infrastructure\Certyfi.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certyfi Technical Architecture | Ahamsys</title>
+<meta name="description" content="Certyfi technical architecture: scope, system and data-model diagrams, signing and Bitcoin anchoring flows, security model and API surface.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=2">
+</head>
+<body class="theme-certyfi">
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="../index.html">Aham<span>sys</span></a>
+    <button class="menu-btn" aria-label="Menu" aria-expanded="false">Menu</button>
+    <nav class="nav-links">
+      <a href="index.html">Certyfi</a>
+      <a href="brochure.html">Brochure</a>
+      <a href="../index.html#products">Products</a>
+      <a class="btn btn-primary btn-sm" href="../index.html#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap doc-page">
+  <aside class="toc"><div class="eyebrow">On this page</div><div class="toc">
+<ul>
+<li><a href="#1-purpose-and-scope">1. Purpose and scope</a><ul>
+<li><a href="#in-scope-built">In scope (built)</a></li>
+<li><a href="#out-of-scope-not-built">Out of scope / not built</a></li>
+</ul>
+</li>
+<li><a href="#2-system-context">2. System context</a></li>
+<li><a href="#3-solution-structure">3. Solution structure</a></li>
+<li><a href="#4-multi-tenancy-and-request-pipeline">4. Multi-tenancy and request pipeline</a></li>
+<li><a href="#5-data-model">5. Data model</a></li>
+<li><a href="#6-credential-lifecycle">6. Credential lifecycle</a></li>
+<li><a href="#7-trust-layer">7. Trust layer</a><ul>
+<li><a href="#71-issuance-and-signing">7.1 Issuance and signing</a></li>
+<li><a href="#72-public-verification">7.2 Public verification</a></li>
+<li><a href="#73-ledger-anchoring">7.3 Ledger anchoring</a></li>
+<li><a href="#74-opentimestamps-format-implemented-natively-in-c">7.4 OpenTimestamps format (implemented natively in C#)</a></li>
+</ul>
+</li>
+<li><a href="#8-security-model">8. Security model</a></li>
+<li><a href="#9-api-surface">9. API surface</a></li>
+<li><a href="#10-frontend-architecture">10. Frontend architecture</a></li>
+<li><a href="#11-deployment-configuration-and-operations">11. Deployment, configuration and operations</a></li>
+<li><a href="#12-testing">12. Testing</a></li>
+<li><a href="#13-roadmap-and-open-decisions">13. Roadmap and open decisions</a></li>
+</ul>
+</div>
+</aside>
+  <main class="prose">
+<h1 id="certyfi-technical-architecture-scope">Certyfi — Technical Architecture &amp; Scope</h1>
+<p><strong>Audience:</strong> engineers and technical reviewers.
+<strong>Status:</strong> reflects the code as of 2026-09-24. Diagrams are Mermaid and render
+on GitHub and in VS Code's Markdown preview.</p>
+<p>Related: <code>technical-approach-summary.md</code> (decisions), <code>test-plan-signing-anchoring.md</code>
+(verification steps), <code>brochure.md</code> (client-facing summary).</p>
+<hr />
+<h2 id="1-purpose-and-scope">1. Purpose and scope</h2>
+<p>Certyfi is a multi-tenant platform through which institutions design, issue,
+manage and publicly verify digital certificates and transcripts. Its defining
+properties are that issuance needs two different people (maker–checker), and
+that authenticity does not depend on trusting Certyfi: each certificate is
+signed under its institution's own key, and the audit ledger is anchored to
+Bitcoin.</p>
+<h3 id="in-scope-built">In scope (built)</h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tenancy</td>
+<td>Schema-per-tenant PostgreSQL, tenant resolution, tenant-claim guard, SuperAdmin provisioning</td>
+</tr>
+<tr>
+<td>Identity &amp; access</td>
+<td>JWT auth, 7 roles, role-scoped endpoints and UI routes</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td>Visual canvas designer, imported background images (local uploads), size presets, two legacy fixed layouts</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td>Draft → approve/reject → active → suspend/reactivate/revoke; custom field schemas; expiry computed live</td>
+</tr>
+<tr>
+<td>Audit</td>
+<td>Hash-chained, append-only <code>ledger_entries</code> (Postgres trigger blocks UPDATE/DELETE) with integrity check</td>
+</tr>
+<tr>
+<td>Signing</td>
+<td>Per-tenant ECDSA P-256 keys, AES-256-GCM at rest, DER signatures, public key endpoint, in-browser verification</td>
+</tr>
+<tr>
+<td>Anchoring</td>
+<td>Periodic ledger checkpoints to Bitcoin via OpenTimestamps; native C# proof parser; downloadable <code>.ots</code> proofs; merkle-root check against a block explorer</td>
+</tr>
+<tr>
+<td>Verification</td>
+<td>Public page + anonymous JSON API + QR codes</td>
+</tr>
+<tr>
+<td>Operations</td>
+<td>SuperAdmin console: tenants, on-demand anchoring</td>
+</tr>
+</tbody>
+</table>
+<h3 id="out-of-scope-not-built">Out of scope / not built</h3>
+<p>Badge rules engine, standalone revocation registry, DID/wallet support,
+selective disclosure, legacy-data migration, partner issuance API (a
+<code>Developer</code> role exists but is not wired), refresh tokens, rate limiting,
+cloud object storage for uploads, a real cloud KMS provider, signing-key
+rotation, RFC 8785 canonicalization, MFA (fields exist, flow does not).</p>
+<hr />
+<h2 id="2-system-context">2. System context</h2>
+<pre class="mermaid">flowchart LR
+    subgraph Users
+        SA[Platform operator&lt;br/&gt;SuperAdmin]
+        IA[Institution staff&lt;br/&gt;Admin / Registrar / Approver / Learner]
+        V[Verifier&lt;br/&gt;anonymous, no login]
+    end
+
+    APP[Certyfi&lt;br/&gt;Angular SPA + ASP.NET Core API]
+
+    PG[(PostgreSQL 16)]
+    CAL[OpenTimestamps&lt;br/&gt;calendar servers x4]
+    BTC[Bitcoin blockchain]
+    EXP[Blockstream Esplora API&lt;br/&gt;block explorer]
+
+    SA --&gt;|manage tenants, run anchoring| APP
+    IA --&gt;|design, issue, approve| APP
+    V --&gt;|verify page / API / .ots proof| APP
+    APP --&gt; PG
+    APP --&gt;|submit digest, poll upgrades| CAL
+    CAL -.-&gt;|aggregate and commit| BTC
+    APP --&gt;|fetch block merkle root| EXP
+    EXP -.-&gt; BTC
+    V -.-&gt;|optional: verify independently&lt;br/&gt;openssl, ots CLI| BTC
+</pre>
+<hr />
+<h2 id="3-solution-structure">3. Solution structure</h2>
+<pre class="mermaid">flowchart TB
+    subgraph FE[Frontend - Angular standalone components, Tailwind]
+        AUTH[features/auth]
+        ADM[features/admin&lt;br/&gt;certificates, achievements, templates,&lt;br/&gt;users, settings, template-editor]
+        PLAT[features/platform&lt;br/&gt;tenants, anchoring]
+        VER[features/verify - public]
+        SH[shared: certificate-preview, canvas-editor,&lt;br/&gt;signature-panel, anchor-panel, qr-code]
+        CORE[core: services, guards, interceptor, models]
+    end
+
+    subgraph BE[Backend - .NET 10]
+        API[Certyfi.Api&lt;br/&gt;controllers, middleware, Program.cs]
+        INF[Certyfi.Infrastructure&lt;br/&gt;EF Core, multi-tenancy, auth,&lt;br/&gt;Signing, Anchoring, Services, Validation]
+        DOM[Certyfi.Domain&lt;br/&gt;entities, enums - no dependencies]
+    end
+
+    FE --&gt;|HTTPS JSON&lt;br/&gt;Authorization + X-Tenant-Slug| API
+    API --&gt; INF --&gt; DOM
+</pre>
+<p>Dependency rule: Domain has no framework references; Infrastructure depends on
+Domain; Api depends on both. Signing and anchoring sit behind interfaces
+(<code>ITenantSigningKeyProvider</code>, <code>ILedgerCheckpointService</code>) so a cloud KMS or an
+extracted service can replace them without changing callers.</p>
+<hr />
+<h2 id="4-multi-tenancy-and-request-pipeline">4. Multi-tenancy and request pipeline</h2>
+<p>One physical Postgres schema per tenant (<code>tenant_&lt;slug&gt;</code>), plus a <code>platform</code>
+schema for the tenant registry, platform admins and signing keys.</p>
+<pre class="mermaid">flowchart LR
+    R[HTTP request] --&gt; H{Path exempt?&lt;br/&gt;/api/v1/platform&lt;br/&gt;/api/v1/verify /health /swagger}
+    H -- yes --&gt; AUTHN
+    H -- no --&gt; TR[TenantResolutionMiddleware&lt;br/&gt;X-Tenant-Slug or subdomain&lt;br/&gt;reject 400/404 if unresolved]
+    TR --&gt; AUTHN[JWT authentication]
+    AUTHN --&gt; TG[TenantClaimGuardMiddleware&lt;br/&gt;token tenant_id must equal resolved tenant]
+    TG --&gt; AZ[Authorization&lt;br/&gt;role policies]
+    AZ --&gt; C[Controller]
+    C --&gt; DB[(TenantDbContext&lt;br/&gt;schema from ITenantContext)]
+</pre>
+<p>Key mechanisms</p>
+<ul>
+<li><code>TenantModelCacheKeyFactory</code> caches one compiled EF model per schema.</li>
+<li><code>TenantDbContextFactory</code> builds a <code>TenantDbContext</code> for a named schema
+  outside any request (provisioning, background anchoring, the public verify
+  endpoint).</li>
+<li>Tenant-schema migrations are compiled against a placeholder schema
+  (<code>unresolved</code>) and applied per tenant by generating an idempotent SQL script
+  and substituting the real schema name. They auto-apply in Development.
+  Platform-schema migrations do not; run <code>dotnet ef database update --context PlatformDbContext</code>.</li>
+<li>A platform-admin token carries no <code>tenant_id</code>; a tenant token carrying a
+  SuperAdmin role is rejected on platform endpoints. <code>SystemRole.TenantAssignable</code>
+  excludes SuperAdmin from tenant seeding and user creation.</li>
+</ul>
+<hr />
+<h2 id="5-data-model">5. Data model</h2>
+<pre class="mermaid">erDiagram
+    TENANT ||--o{ TENANT_SIGNING_KEY : owns
+    PLATFORM_ADMIN {
+        guid Id
+        string Email
+    }
+    TENANT {
+        guid Id
+        string Slug
+        string SchemaName
+        enum Status
+        string BrandingLogoUrl
+    }
+    TENANT_SIGNING_KEY {
+        guid Id
+        guid TenantId
+        string KeyId
+        string Algorithm
+        string PublicKeyPem
+        string EncryptedPrivateKey
+        bool IsActive
+    }
+
+    APPLICATION_USER ||--o{ USER_ROLE : has
+    ROLE ||--o{ USER_ROLE : grants
+    CERTIFICATE_TEMPLATE ||--o{ ACHIEVEMENT : &quot;snapshotted into&quot;
+    ACHIEVEMENT ||--o{ CREDENTIAL : issues
+    CREDENTIAL ||--o{ LEDGER_ENTRY : audited_by
+    APPLICATION_USER ||--o{ CREDENTIAL : &quot;requests / decides&quot;
+    LEDGER_ENTRY }o--o| LEDGER_CHECKPOINT : &quot;covered by (via sequence number)&quot;
+
+    CERTIFICATE_TEMPLATE {
+        guid Id
+        string Name
+        enum Kind
+        json FieldSchema
+        json Layout
+        string BackgroundImageUrl
+    }
+    ACHIEVEMENT {
+        guid Id
+        string Title
+        int ValidityPeriodMonths
+        json TemplateLayoutSnapshot
+    }
+    CREDENTIAL {
+        guid Id
+        string RecipientName
+        enum Status
+        datetime IssuedAt
+        datetime ExpiresOn
+        string CanonicalHash
+        string Signature
+        string SignatureKeyId
+        json FieldValues
+        json FieldSchemaSnapshot
+    }
+    LEDGER_ENTRY {
+        long SequenceNumber PK
+        guid CredentialId
+        string EventType
+        string PreviousEntryHash
+        string EntryHash
+    }
+    LEDGER_CHECKPOINT {
+        guid Id
+        long UpToSequenceNumber
+        string CheckpointHash
+        string Status
+        bytes OtsProof
+        int BitcoinBlockHeight
+        bool MerkleRootVerified
+    }
+</pre>
+<p>Placement: <code>Tenant</code>, <code>PlatformAdmin</code>, <code>TenantSigningKey</code> are in the <code>platform</code>
+schema (secret management is a platform concern, mirroring a shared KMS
+account). Everything else is in each tenant's schema.</p>
+<p>Design principles</p>
+<ul>
+<li><strong>Snapshot, not live reference.</strong> Achievements copy template fields; credentials
+  copy the field schema. Editing a template never changes an issued
+  certificate's appearance.</li>
+<li><strong>Expiry is computed at read time</strong>, never stored as a status.</li>
+<li><strong><code>LedgerEntry</code> uses <code>SequenceNumber</code> as the primary key</strong> (explicit <code>HasKey</code>),
+  with <code>Id</code> as an opaque external identifier.</li>
+</ul>
+<hr />
+<h2 id="6-credential-lifecycle">6. Credential lifecycle</h2>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; PendingApproval: Create (Registrar / Admin / Learner)
+    PendingApproval --&gt; Active: Approve (different user)
+    PendingApproval --&gt; Rejected: Reject (different user, reason)
+    Active --&gt; Suspended: Suspend (reason)
+    Suspended --&gt; Active: Reactivate
+    Active --&gt; Revoked: Revoke (reason)
+    Suspended --&gt; Revoked: Revoke (reason)
+    Rejected --&gt; [*]
+    Revoked --&gt; [*]
+</pre>
+<p><code>Expired</code> is a display status derived from <code>ExpiresOn</code> at verification time.
+Self-approval is blocked by the system, including for Institution Admins.
+Every transition appends a ledger entry inside the same database transaction as
+the credential change, so both commit or neither does.</p>
+<hr />
+<h2 id="7-trust-layer">7. Trust layer</h2>
+<p>Three independent layers, each closing a different attack:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Defends against</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Record-based verification</td>
+<td>Edited PDF/image</td>
+<td>Verification resolves credential ID to the database record</td>
+</tr>
+<tr>
+<td>Hash-chained ledger</td>
+<td>Silent edits to history</td>
+<td><code>EntryHash = SHA-256(previous hash + event data)</code>; append-only trigger; <code>GET /ledger/integrity</code> re-walks the chain</td>
+</tr>
+<tr>
+<td>Signature</td>
+<td>Forged or altered credential</td>
+<td>ECDSA P-256 over the canonical hash, tenant key</td>
+</tr>
+<tr>
+<td>Bitcoin anchor</td>
+<td>Whole-database rewrite (including by the operator)</td>
+<td>OpenTimestamps checkpoints of the ledger tip</td>
+</tr>
+</tbody>
+</table>
+<h3 id="71-issuance-and-signing">7.1 Issuance and signing</h3>
+<pre class="mermaid">sequenceDiagram
+    actor Maker as Registrar (maker)
+    actor Checker as Approver (checker)
+    participant API as CredentialsController
+    participant KMS as ITenantSigningKeyProvider
+    participant PDB as Platform DB
+    participant TDB as Tenant DB
+
+    Maker-&gt;&gt;API: POST /credentials/from-template
+    API-&gt;&gt;TDB: insert Credential (PendingApproval) + ledger &quot;Requested&quot; (one transaction)
+    Checker-&gt;&gt;API: POST /credentials/{id}/approve
+    API-&gt;&gt;API: reject if checker == maker
+    API-&gt;&gt;API: CanonicalHash = SHA-256(fixed-shape JSON)
+    API-&gt;&gt;KMS: GetOrCreateActiveKey(tenant)
+    KMS-&gt;&gt;PDB: read or lazily create key (encrypted private key)
+    API-&gt;&gt;KMS: Sign(tenant, keyId, CanonicalHash)
+    KMS-&gt;&gt;KMS: decrypt private key (AES-256-GCM), ECDSA sign, DER encode
+    KMS--&gt;&gt;API: signature
+    API-&gt;&gt;TDB: set Active, Signature, KeyId + ledger &quot;Approved&quot; (one transaction)
+</pre>
+<p>Signing details</p>
+<ul>
+<li>Algorithm ES256 (ECDSA P-256, SHA-256). Signatures use RFC 3279 DER
+  (<code>DSASignatureFormat.Rfc3279DerSequence</code>). .NET's default IEEE P1363 format
+  is not interoperable with OpenSSL, Node, Java or Python.</li>
+<li>The browser's Web Crypto API needs raw P1363, so the frontend converts DER to
+  raw before verifying.</li>
+<li>Master key: <code>Kms:LocalMasterKey</code> (base64, 32 bytes) from user-secrets or
+  environment, validated at startup. Never in <code>appsettings.json</code>.</li>
+</ul>
+<h3 id="72-public-verification">7.2 Public verification</h3>
+<pre class="mermaid">sequenceDiagram
+    actor V as Verifier (browser)
+    participant API as VerificationController (anonymous)
+    V-&gt;&gt;API: GET /verify/{slug}/{id}
+    API--&gt;&gt;V: record, canonicalHash, signature, keyId, algorithm, anchorStatus
+    V-&gt;&gt;API: GET /verify/{slug}/signing-keys/{keyId}
+    API--&gt;&gt;V: public key PEM
+    V-&gt;&gt;V: Web Crypto ECDSA verify locally
+    opt Independent check
+        V-&gt;&gt;V: openssl dgst -sha256 -verify pub.pem -signature sig.der hash.txt
+    end
+</pre>
+<p>Verify endpoints are exempt from tenant resolution: the tenant comes from the
+URL path. Pending and rejected credentials return 404, so the endpoint is not
+a workflow-state oracle. The response deliberately omits recipient email and
+all reason fields.</p>
+<h3 id="73-ledger-anchoring">7.3 Ledger anchoring</h3>
+<pre class="mermaid">sequenceDiagram
+    participant BG as LedgerAnchorBackgroundService
+    participant CS as LedgerCheckpointService
+    participant TDB as Tenant DB
+    participant CAL as Calendar servers (Alice, Bob, Finney, Catallaxy)
+    participant EXP as Blockstream Esplora
+
+    loop hourly, per active tenant
+        BG-&gt;&gt;CS: RunCheckpointStep
+        CS-&gt;&gt;TDB: latest LedgerEntry vs last checkpoint
+        alt new activity
+            CS-&gt;&gt;CS: digest = SHA-256(tip EntryHash)
+            CS-&gt;&gt;CAL: POST /digest (raw 32 bytes)
+            CAL--&gt;&gt;CS: serialized Timestamp (pending attestation)
+            CS-&gt;&gt;CS: merge responses, wrap as .ots
+            CS-&gt;&gt;TDB: insert LedgerCheckpoint (Pending, OtsProof)
+        else no new activity
+            CS--&gt;&gt;BG: skip (idempotent)
+        end
+    end
+    loop every 3 hours
+        BG-&gt;&gt;CS: RunUpgradeStep
+        CS-&gt;&gt;CAL: GET /timestamp/{digest hex}
+        CAL--&gt;&gt;CS: upgraded Timestamp (or 404)
+        CS-&gt;&gt;CS: merge, then search tree for Bitcoin attestation
+        opt Bitcoin attestation found
+            CS-&gt;&gt;EXP: block at height, read merkle_root
+            CS-&gt;&gt;CS: byte-reverse and compare to attestation leaf message
+            CS-&gt;&gt;TDB: Status=Confirmed, height, MerkleRootVerified
+        end
+    end
+</pre>
+<p>A credential's anchor status comes from the earliest checkpoint whose
+<code>UpToSequenceNumber</code> covers that credential's latest ledger entry:
+<code>NotYetCheckpointed</code>, <code>Pending</code> or <code>Confirmed</code>.</p>
+<h3 id="74-opentimestamps-format-implemented-natively-in-c">7.4 OpenTimestamps format (implemented natively in C#)</h3>
+<p>Ported from the <code>python-opentimestamps</code> reference source, then cross-checked
+with the official <code>ots</code> CLI.</p>
+<pre class="mermaid">flowchart TB
+    F[&quot;.ots DetachedTimestampFile&quot;] --&gt; M[&quot;31-byte magic header&quot;]
+    F --&gt; VER[&quot;version byte = 1&quot;]
+    F --&gt; HOP[&quot;file hash op tag (0x08 = SHA-256)&quot;]
+    F --&gt; DIG[&quot;32-byte digest&quot;]
+    F --&gt; TS[&quot;Timestamp tree&quot;]
+    TS --&gt; T1[&quot;0xff = more siblings follow&quot;]
+    TS --&gt; T2[&quot;0x00 = attestation follows&quot;]
+    TS --&gt; T3[&quot;op tag = edge to child Timestamp&quot;]
+    T2 --&gt; A1[&quot;Pending: 83dfe30d2ef90c8e + calendar URI&quot;]
+    T2 --&gt; A2[&quot;Bitcoin: 0588960d73d71901 + varuint height&quot;]
+    T3 --&gt; O[&quot;Append f0 / Prepend f1 / SHA-256 08&lt;br/&gt;(also parsed: Reverse f2, Hexlify f3, SHA-1 02, RIPEMD-160 03)&quot;]
+</pre>
+<p>Primitives: unsigned LEB128 varuints; varbytes = varuint length + bytes.
+Unknown attestation tags are preserved as opaque data. Byte order note: an
+attestation's message is the merkle root in internal order; block explorers
+display it reversed, so the comparison reverses first.</p>
+<hr />
+<h2 id="8-security-model">8. Security model</h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cross-tenant access</td>
+<td>Schema isolation; resolved tenant checked against JWT claim on every request</td>
+</tr>
+<tr>
+<td>Privilege escalation</td>
+<td>Tenant role list excludes SuperAdmin; platform tokens carry no tenant claim</td>
+</tr>
+<tr>
+<td>Self-approval</td>
+<td>Enforced in <code>Approve</code>/<code>Reject</code>, no role exemption</td>
+</tr>
+<tr>
+<td>History tampering</td>
+<td>Hash chain + append-only DB trigger + Bitcoin anchoring</td>
+</tr>
+<tr>
+<td>Credential forgery</td>
+<td>Per-tenant ECDSA signatures, public keys served anonymously</td>
+</tr>
+<tr>
+<td>Key compromise blast radius</td>
+<td>One key per tenant; a tenant key cannot sign for another</td>
+</tr>
+<tr>
+<td>Private key at rest</td>
+<td>AES-256-GCM with master key outside the database</td>
+</tr>
+<tr>
+<td>Secrets in source</td>
+<td><code>Jwt:SigningKey</code>, <code>Kms:LocalMasterKey</code>, DB string via user-secrets or env; validated at startup</td>
+</tr>
+<tr>
+<td>PII exposure on verify</td>
+<td>DTO excludes email and reason fields</td>
+</tr>
+<tr>
+<td>Custom-field injection</td>
+<td>Field values validated against the credential's own schema snapshot</td>
+</tr>
+</tbody>
+</table>
+<p>Known weaknesses: no rate limiting on login or verify, no refresh tokens, no
+MFA flow, uploads on local disk, signed payload not RFC 8785 canonical.</p>
+<hr />
+<h2 id="9-api-surface">9. API surface</h2>
+<p>Base path <code>/api/v1</code>. "Tenant" endpoints need <code>X-Tenant-Slug</code> and a tenant JWT.</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Endpoint</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auth</td>
+<td><code>POST /auth/login</code></td>
+<td>Tenant, anonymous</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><code>POST /platform/auth/login</code></td>
+<td>Anonymous</td>
+</tr>
+<tr>
+<td>Tenants</td>
+<td><code>GET/POST /platform/tenants</code>, <code>POST /platform/tenants/migrate-schemas</code></td>
+<td>SuperAdmin</td>
+</tr>
+<tr>
+<td>Anchoring</td>
+<td><code>POST /platform/anchoring/checkpoint-now</code>, <code>/upgrade-now</code></td>
+<td>SuperAdmin</td>
+</tr>
+<tr>
+<td>Users</td>
+<td><code>GET/POST /users</code></td>
+<td>Institution Admin</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td><code>GET /certificate-templates</code></td>
+<td>Registrar, Admin</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td><code>POST/PUT/DELETE /certificate-templates</code>, <code>POST .../{id}/deactivate</code></td>
+<td>Institution Admin</td>
+</tr>
+<tr>
+<td>Achievements</td>
+<td><code>GET /achievements</code></td>
+<td>Registrar, Approver, Admin, Learner</td>
+</tr>
+<tr>
+<td>Achievements</td>
+<td><code>POST/PUT /achievements</code></td>
+<td>Registrar, Admin</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td><code>GET /credentials</code>, <code>GET /credentials/{id}</code>, <code>GET .../{id}/ledger</code></td>
+<td>Staff roles</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td><code>POST /credentials</code>, <code>POST /credentials/from-template</code></td>
+<td>Registrar, Admin, Learner</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td><code>POST .../{id}/approve</code>, <code>/reject</code>, <code>/suspend</code>, <code>/reactivate</code>, <code>/revoke</code></td>
+<td>Approver, Admin</td>
+</tr>
+<tr>
+<td>Ledger</td>
+<td><code>GET /ledger/integrity</code></td>
+<td>Institution Admin</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><code>GET /tenant-settings/branding</code></td>
+<td>Registrar, Approver, Admin, Learner</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><code>PUT /tenant-settings/branding</code></td>
+<td>Institution Admin</td>
+</tr>
+<tr>
+<td>Uploads</td>
+<td><code>POST /uploads/background-image</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Verify</td>
+<td><code>GET /verify/{slug}/{id}</code></td>
+<td>Anonymous</td>
+</tr>
+<tr>
+<td>Verify</td>
+<td><code>GET /verify/{slug}/signing-keys/{keyId}</code></td>
+<td>Anonymous</td>
+</tr>
+<tr>
+<td>Verify</td>
+<td><code>GET /verify/{slug}/{id}/anchor-proof</code> (<code>.ots</code> download)</td>
+<td>Anonymous</td>
+</tr>
+<tr>
+<td>Health</td>
+<td><code>GET /health</code></td>
+<td>Anonymous</td>
+</tr>
+</tbody>
+</table>
+<p>Uploaded images are served as static files at <code>/uploads/{tenant schema}/...</code>,
+ahead of tenant resolution, since an <code>&lt;img&gt;</code> tag cannot send custom headers.</p>
+<hr />
+<h2 id="10-frontend-architecture">10. Frontend architecture</h2>
+<ul>
+<li>Angular standalone components with signals; Tailwind for styling; lazy-loaded routes.</li>
+<li>Guards: <code>authGuard</code> and <code>roleGuard([...])</code>. <code>authInterceptor</code> attaches the
+  bearer token and <code>X-Tenant-Slug</code>.</li>
+<li>Route areas: <code>/login</code>, <code>/admin/*</code> (staff), <code>/admin/templates/new|:id/edit</code>
+  (full-screen canvas editor), <code>/platform/*</code> (SuperAdmin), <code>/verify/:slug/:id</code> (public).</li>
+<li><code>CertificatePreviewComponent</code> renders both legacy layouts and canvas layouts,
+  scaling large canvases to fit via <code>ResizeObserver</code> and CSS transform.</li>
+<li><code>SignaturePanelComponent</code> verifies signatures with Web Crypto.
+  <code>AnchorPanelComponent</code> shows Bitcoin status and the proof download. Both
+  appear on the public page (hidden in print) and the admin Verification tab.</li>
+</ul>
+<hr />
+<h2 id="11-deployment-configuration-and-operations">11. Deployment, configuration and operations</h2>
+<p>Local: <code>docker compose up -d</code> (Postgres 16 on host port 5433), backend on
+<code>http://localhost:5080</code>, Angular dev server on <code>http://localhost:4200</code>.</p>
+<p>Required configuration (user-secrets or environment)</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ConnectionStrings:Default</code></td>
+<td>PostgreSQL</td>
+</tr>
+<tr>
+<td><code>Jwt:SigningKey</code></td>
+<td>JWT HMAC key</td>
+</tr>
+<tr>
+<td><code>Kms:LocalMasterKey</code></td>
+<td>Base64 32-byte key for private-key encryption</td>
+</tr>
+<tr>
+<td><code>SuperAdminSeed:Email</code> / <code>Password</code></td>
+<td>Bootstraps the first platform admin (Development only)</td>
+</tr>
+</tbody>
+</table>
+<p>Operational notes</p>
+<ul>
+<li>Development startup seeds the SuperAdmin and migrates every tenant schema.
+  Elsewhere, tenant migration is the SuperAdmin <code>migrate-schemas</code> action.</li>
+<li>Platform migrations are always manual.</li>
+<li>The background anchoring service starts about 30 s after boot, checkpoints
+  hourly and checks confirmations every 3 hours (constants in
+  <code>LedgerAnchorBackgroundService</code>). It needs outbound HTTPS to the four calendar
+  servers and <code>blockstream.info</code>.</li>
+<li>Running multiple API instances would run the anchoring loop on each.
+  Checkpoints are idempotent per sequence number (unique index), but a shared
+  lock would avoid duplicate calendar submissions.</li>
+</ul>
+<hr />
+<h2 id="12-testing">12. Testing</h2>
+<p><code>dotnet test</code> runs 77 integration tests against a throwaway Postgres container
+per test class (Testcontainers): tenancy isolation, privilege escalation,
+maker–checker, templates, custom fields, ledger integrity, signing (including a
+tamper check), OpenTimestamps binary round trips against a real captured
+calendar response, and real-network anchoring tests.</p>
+<p>Independent verification is deliberate practice: signatures were checked with
+OpenSSL and Node, and <code>.ots</code> proofs with the official <code>ots</code> CLI, because
+same-language tests once passed while a signature format was non-interoperable.
+See <code>test-plan-signing-anchoring.md</code>.</p>
+<hr />
+<h2 id="13-roadmap-and-open-decisions">13. Roadmap and open decisions</h2>
+<ol>
+<li>Cloud KMS provider (AWS KMS / Azure Key Vault) behind <code>ITenantSigningKeyProvider</code>.</li>
+<li>Signing-key rotation with retired keys retained for old signatures.</li>
+<li>RFC 8785 canonicalization of the signed payload.</li>
+<li>Partner API: API keys or OAuth client credentials, scopes, rate limits, docs.</li>
+<li>Object storage for uploads; refresh tokens; rate limiting; MFA.</li>
+<li>Checkpoint listing in the SuperAdmin UI; leader election for the anchoring loop.</li>
+<li>Extract signing and anchoring into a standalone Trust-Ledger service if sold per vertical.</li>
+<li>Badge rules, revocation registry, DID/wallets, selective disclosure, migration tooling.</li>
+</ol>
+  </main>
+</div>
+<footer><div class="wrap"><span>© 2026 Ahamsys Consultancy Pvt. Ltd.</span><span><a href="index.html">← Back to Certyfi</a></span></div></footer>
+<script src="../assets/site.js?v=2"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict', flowchart: { htmlLabels: true } });
+</script>
+</body>
+</html>

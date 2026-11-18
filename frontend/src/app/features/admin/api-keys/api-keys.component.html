@@ -1,0 +1,270 @@
+<div class="flex items-center justify-between mb-2">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900">API keys</h1>
+    <a href="/developers" target="_blank" rel="noopener" class="text-sm text-gray-600 underline hover:text-gray-900">Developer guide to send with a key ↗</a>
+  </div>
+  <button
+    type="button"
+    (click)="toggleForm()"
+    class="inline-flex items-center px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 cursor-pointer"
+  >
+    {{ showForm() ? 'Cancel' : 'New API key' }}
+  </button>
+</div>
+<p class="text-sm text-gray-500 mb-6 max-w-2xl">
+  Let another system, such as your LMS or student information system, issue certificates through the
+  <a [href]="docsUrl" target="_blank" rel="noopener" class="underline hover:text-gray-900">Certyfi Partner API</a>.
+  Each key only sees the certificates it created.
+</p>
+
+@if (newKey(); as key) {
+  <div class="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-5 max-w-2xl">
+    <p class="text-sm font-medium text-amber-900 mb-1">Copy the key for "{{ key.name }}" now</p>
+    <p class="text-sm text-amber-800 mb-3">This is the only time it will be shown. If it's lost, revoke it and create a new one.</p>
+    <div class="flex items-center gap-2">
+      <code class="flex-1 min-w-0 px-3 py-2 bg-white border border-amber-200 rounded-md text-xs font-mono text-gray-900 break-all">{{ key.apiKey }}</code>
+      <button
+        type="button"
+        (click)="copyKey()"
+        class="px-3 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 cursor-pointer shrink-0"
+      >
+        {{ copied() ? 'Copied' : 'Copy' }}
+      </button>
+    </div>
+    <button type="button" (click)="dismissKey()" class="mt-3 text-sm text-amber-900 underline cursor-pointer">
+      I've saved it
+    </button>
+  </div>
+}
+
+@if (showForm()) {
+  <form
+    (ngSubmit)="submit()"
+    #f="ngForm"
+    class="mb-8 bg-white border border-gray-200 rounded-lg p-6 max-w-md"
+  >
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+      <input
+        type="text"
+        name="name"
+        [(ngModel)]="name"
+        required
+        maxlength="200"
+        placeholder="e.g. LMSpromise production"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+      />
+    </div>
+
+    <fieldset class="mb-4">
+      <legend class="block text-sm font-medium text-gray-700 mb-2">Permissions</legend>
+      @for (scope of scopeOptions; track scope.value) {
+        <label class="flex items-start gap-2 mb-2 text-sm cursor-pointer">
+          <input type="checkbox" [name]="'scope-' + scope.value" [(ngModel)]="selectedScopes[scope.value]" class="mt-0.5" />
+          <span>
+            <span class="text-gray-900">{{ scope.label }}</span>
+            <span class="block text-gray-500">{{ scope.description }}</span>
+          </span>
+        </label>
+      }
+    </fieldset>
+
+    <label class="flex items-start gap-2 mb-4 text-sm" [class.opacity-50]="!canAutoIssue" [class.cursor-pointer]="canAutoIssue">
+      <input type="checkbox" name="autoIssue" [(ngModel)]="autoIssue" [disabled]="!canAutoIssue" class="mt-0.5" />
+      <span>
+        <span class="text-gray-900">Issue without approval</span>
+        <span class="block text-gray-500">
+          Certificates from this key skip the Approver (templates that need final approval still go to an institution admin).
+          The other institution admin must confirm this before it takes effect. Leave off to have an approver review each one.
+        </span>
+      </span>
+    </label>
+
+    <label class="flex items-start gap-2 mb-4 text-sm" [class.opacity-50]="!canAutoIssue" [class.cursor-pointer]="canAutoIssue">
+      <input type="checkbox" name="requiresPayment" [(ngModel)]="requiresPayment" [disabled]="!canAutoIssue" class="mt-0.5" />
+      <span>
+        <span class="text-gray-900">Students pay before issue</span>
+        <span class="block text-gray-500">
+          Certificates from this key wait as "Awaiting payment" until the student pays in the student portal,
+          then go on as above.
+        </span>
+      </span>
+    </label>
+
+    @if (errorMessage()) {
+      <p class="text-sm text-red-600 mb-4">{{ errorMessage() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="f.invalid || chosenScopes.length === 0 || submitting()"
+      class="w-full px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    >
+      {{ submitting() ? 'Creating...' : 'Create API key' }}
+    </button>
+  </form>
+}
+
+@if (errorMessage() && !showForm()) {
+  <p class="text-sm text-red-600 mb-4">{{ errorMessage() }}</p>
+}
+
+@if (loading()) {
+  <p class="text-sm text-gray-500">Loading API keys...</p>
+} @else if (clients().length === 0) {
+  <p class="text-sm text-gray-500">No API keys yet.</p>
+} @else {
+  <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Name</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Key</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Permissions</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Certificates</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Last used</th>
+          <th class="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (client of clients(); track client.id) {
+          <tr class="border-b border-gray-100 last:border-0 align-top">
+            <td class="px-4 py-3 text-gray-900">
+              {{ client.name }}
+              <span class="block text-xs text-gray-500">Created by {{ client.createdByName }}, {{ client.createdAt | date: 'mediumDate' }}</span>
+              @if (client.webhookUrl) {
+                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                  [class]="client.webhookFailing ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'">
+                  {{ client.webhookFailing ? 'Webhook failing' : 'Webhook on' }}
+                </span>
+              }
+            </td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-600">cfy_{{ client.keyPrefix }}_…</td>
+            <td class="px-4 py-3 text-gray-600">
+              {{ client.scopes.join(', ') }}
+              @if (client.autoIssue) {
+                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  Issues without approval
+                </span>
+              } @else if (client.autoIssuePending) {
+                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800" title="Waiting for the other institution admin to confirm, in Approvals & audit">
+                  Issue without approval: waiting for confirmation
+                </span>
+              }
+              @if (client.requiresPayment) {
+                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                  Students pay first
+                </span>
+              }
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ client.credentialCount }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ client.lastUsedAt ? (client.lastUsedAt | date: 'medium') : 'Never' }}</td>
+            <td class="px-4 py-3">
+              @if (client.revokedAt) {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  Revoked
+                </span>
+              } @else {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Active
+                </span>
+              }
+            </td>
+            <td class="px-4 py-3 text-right">
+              @if (!client.revokedAt) {
+                <button type="button" (click)="openWebhook(client)" class="text-sm text-gray-700 hover:text-gray-900 underline mr-3 cursor-pointer">
+                  Webhook
+                </button>
+                <button type="button" (click)="revoke(client)" class="text-sm text-red-600 hover:text-red-800 cursor-pointer">
+                  Revoke
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-modal [open]="webhookClient() !== null" [title]="'Webhook: ' + (webhookClient()?.name ?? '')" maxWidthClass="max-w-2xl" (closed)="closeWebhook()">
+  @if (webhookClient(); as client) {
+    <p class="text-sm text-gray-600 mb-4">
+      Certyfi calls this URL whenever one of this key's certificates changes status (paid, approved, rejected, cancelled,
+      suspended, reactivated, revoked, expired), so the partner app updates straight away instead of checking.
+      Calls are signed with the secret and retried for about a day if the partner is down.
+    </p>
+    <form (ngSubmit)="saveWebhook()" #wf="ngForm" class="space-y-3">
+      <div>
+        <label for="wh-url" class="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+        <input id="wh-url" name="url" [(ngModel)]="webhookUrl" required placeholder="https://lms.example.com/api/webhooks/certyfi/…"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" />
+      </div>
+      <div>
+        <label for="wh-secret" class="block text-sm font-medium text-gray-700 mb-1">Webhook secret</label>
+        <input id="wh-secret" name="secret" type="password" [(ngModel)]="webhookSecret" autocomplete="off"
+          [required]="!client.webhookUrl"
+          [placeholder]="client.webhookUrl ? 'Saved; leave empty to keep it' : 'whsec_… from the partner app'"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" />
+        <p class="mt-1 text-xs text-gray-500">The secret is stored encrypted and never shown again.</p>
+      </div>
+      @if (webhookError()) {
+        <p class="text-sm text-red-700" role="alert">{{ webhookError() }}</p>
+      }
+      @if (webhookNote()) {
+        <p class="text-sm text-green-800" role="status">{{ webhookNote() }}</p>
+      }
+      @if (testResult(); as r) {
+        <p class="text-sm" [class]="r.ok ? 'text-green-800' : 'text-red-700'" role="status">
+          {{ r.ok ? 'Test call accepted (' + r.statusCode + ').' : 'Test call failed: ' + r.error }}
+        </p>
+      }
+      <div class="flex flex-wrap gap-2">
+        <button type="submit" [disabled]="wf.invalid || webhookBusy()"
+          class="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50 cursor-pointer">Save</button>
+        @if (client.webhookUrl) {
+          <button type="button" (click)="testWebhook()" [disabled]="webhookBusy()"
+            class="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-50 cursor-pointer">Send test</button>
+          <button type="button" (click)="removeWebhook()" [disabled]="webhookBusy()"
+            class="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-sm hover:bg-red-50 disabled:opacity-50 cursor-pointer">Remove</button>
+        }
+      </div>
+    </form>
+
+    <div class="mt-6 flex items-center justify-between">
+      <h3 class="text-sm font-medium text-gray-900">Recent calls</h3>
+      <button type="button" (click)="loadDeliveries(client.id)" class="text-xs text-gray-700 underline cursor-pointer">Refresh</button>
+    </div>
+    @if (deliveries().length === 0) {
+      <p class="mt-2 text-sm text-gray-500">None yet.</p>
+    } @else {
+      <div class="mt-2 border border-gray-200 rounded-md overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead class="bg-gray-50 text-gray-500">
+            <tr>
+              <th class="text-left px-3 py-2 font-medium">When</th>
+              <th class="text-left px-3 py-2 font-medium">Certificate status</th>
+              <th class="text-left px-3 py-2 font-medium">Call</th>
+              <th class="text-left px-3 py-2 font-medium">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of deliveries(); track d.id) {
+              <tr class="border-t border-gray-100 align-top">
+                <td class="px-3 py-2 text-gray-600 whitespace-nowrap">{{ d.createdAt | date: 'd MMM, HH:mm' }}</td>
+                <td class="px-3 py-2 text-gray-900">{{ d.credentialStatus }}</td>
+                <td class="px-3 py-2"><span class="inline-flex px-2 py-0.5 rounded-full font-medium" [class]="deliveryClasses(d.state)">{{ d.state }}</span></td>
+                <td class="px-3 py-2 text-gray-600">
+                  {{ d.attempts }} attempt{{ d.attempts === 1 ? '' : 's' }}{{ d.lastStatusCode ? ' · ' + d.lastStatusCode : '' }}
+                  @if (d.lastError) { <span class="block text-red-700">{{ d.lastError }}</span> }
+                  @if (d.nextAttemptAt) { <span class="block">Next try {{ d.nextAttemptAt | date: 'd MMM, HH:mm' }}</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</app-modal>

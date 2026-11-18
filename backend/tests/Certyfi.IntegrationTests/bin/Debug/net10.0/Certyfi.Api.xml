@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Certyfi.Api</name>
+    </assembly>
+    <members>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.ListTemplates(System.Threading.CancellationToken)">
+            <summary>List the institution's active certificate templates.</summary>
+            <remarks>Use a template's id and field schema to build an issue request. Requires <c>templates:read</c>.</remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.CreateTemplatePreviewLink(System.Guid,System.Threading.CancellationToken)">
+            <summary>Get a link to a preview of a template.</summary>
+            <remarks>
+            Returns a URL to a Certyfi page that draws the template with sample data, exactly as a certificate
+            from it will look. Show it in a new tab or an iframe (e.g. next to your template picker). The link
+            expires after 15 minutes, so request a fresh one each time you show it. Requires <c>templates:read</c>.
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.IssueCredential(Certyfi.Api.Controllers.PartnerIssueCredentialRequest,System.Threading.CancellationToken)">
+            <summary>Issue a credential.</summary>
+            <remarks>
+            Returns 201 with the new credential. If <c>externalReference</c> matches a credential this key already
+            created, nothing new is created and that credential is returned with 200, so retries are safe.
+            The credential is <c>PendingApproval</c> until an approver at the institution approves it, or
+            <c>Active</c> immediately if the key was created with auto-issue. If the key requires payment it starts
+            as <c>AwaitingPayment</c> until the student pays in the student portal. Certyfi emails the student
+            a link to the student portal (and again when the certificate is issued). Requires <c>credentials:write</c>.
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.GetCredential(System.Guid,System.Threading.CancellationToken)">
+            <summary>Get a credential this key created.</summary>
+            <remarks>Requires <c>credentials:read</c>.</remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.ListCredentials(System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>List credentials this key created, newest first.</summary>
+            <remarks>
+            Filter by <c>externalReference</c> to look up the credential for one record in your system.
+            <c>limit</c> defaults to 50 (max 200). Requires <c>credentials:read</c>.
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.RevokeCredential(System.Guid,Certyfi.Api.Controllers.PartnerRevokeCredentialRequest,System.Threading.CancellationToken)">
+            <summary>Ask for a credential this key created to be revoked.</summary>
+            <remarks>
+            Revoking is permanent, so it needs a person at the institution to approve it: this records a
+            revocation request and returns <c>202 Accepted</c> with <c>revocationRequested: true</c>. The
+            credential stays as it is until someone approves it; <c>status</c> then becomes <c>Revoked</c>
+            (poll <c>GET /credentials/{id}</c>). Calling again while a request is waiting returns the same 202.
+            Only Active or Suspended credentials can be revoked. A reason is required. Requires <c>credentials:revoke</c>.
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Controllers.PartnerController.CancelCredential(System.Guid,Certyfi.Api.Controllers.PartnerCancelCredentialRequest,System.Threading.CancellationToken)">
+            <summary>Cancel a credential that hasn't been issued yet.</summary>
+            <remarks>
+            For a credential this key requested that is still <c>AwaitingPayment</c> or <c>PendingApproval</c>
+            (e.g. the enrolment was cancelled). It becomes <c>Cancelled</c> straight away: the student can no
+            longer pay for it, an approver can no longer approve it, and the student is emailed. Cancelling one
+            that's already cancelled returns it again (200). An issued credential gets 409; revoke it instead.
+            Requires <c>credentials:write</c>.
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Imports.ImportRowValidator.NumericDate">
+            <remarks>
+            Pattern:<br/>
+            <code>^(\\d{1,4})[/.\\- ](\\d{1,2})[/.\\- ](\\d{1,4})$</code><br/>
+            Explanation:<br/>
+            <code>
+            ○ Match if at the beginning of the string.<br/>
+            ○ 1st capture group.<br/>
+                ○ Match a Unicode digit atomically at least 1 and at most 4 times.<br/>
+            ○ Match a character in the set [ \--/].<br/>
+            ○ 2nd capture group.<br/>
+                ○ Match a Unicode digit atomically at least 1 and at most 2 times.<br/>
+            ○ Match a character in the set [ \--/].<br/>
+            ○ 3rd capture group.<br/>
+                ○ Match a Unicode digit atomically at least 1 and at most 4 times.<br/>
+            ○ Match if at the end of the string or if before an ending newline.<br/>
+            </code>
+            </remarks>
+        </member>
+        <member name="M:Certyfi.Api.Imports.ImportRowValidator.EmailPattern">
+            <remarks>
+            Pattern:<br/>
+            <code>^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$</code><br/>
+            Explanation:<br/>
+            <code>
+            ○ Match if at the beginning of the string.<br/>
+            ○ Match a character in the set [^@\s] atomically at least once.<br/>
+            ○ Match '@'.<br/>
+            ○ Match a character in the set [^@\s] greedily at least once.<br/>
+            ○ Match '.'.<br/>
+            ○ Match a character in the set [^@\s] atomically at least once.<br/>
+            ○ Match if at the end of the string or if before an ending newline.<br/>
+            </code>
+            </remarks>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.NumericDate_0">
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the NumericDate method.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.NumericDate_0.Instance">
+            <summary>Cached, thread-safe singleton instance.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.NumericDate_0.#ctor">
+            <summary>Initializes the instance.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory">
+            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory.CreateInstance">
+            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory.Runner">
+            <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if a possible match was found; false if no more matches are possible.</returns>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.NumericDate_0.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.EmailPattern_1">
+            <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the EmailPattern method.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.EmailPattern_1.Instance">
+            <summary>Cached, thread-safe singleton instance.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.EmailPattern_1.#ctor">
+            <summary>Initializes the instance.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory">
+            <summary>Provides a factory for creating <see cref="T:System.Text.RegularExpressions.RegexRunner"/> instances to be used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory.CreateInstance">
+            <summary>Creates an instance of a <see cref="T:System.Text.RegularExpressions.RegexRunner"/> used by methods on <see cref="T:System.Text.RegularExpressions.Regex"/>.</summary>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory.Runner">
+            <summary>Provides the runner that contains the custom logic implementing the specified regular expression.</summary>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory.Runner.Scan(System.ReadOnlySpan{System.Char})">
+            <summary>Scan the <paramref name="inputSpan"/> starting from base.runtextstart for the next match.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory.Runner.TryFindNextPossibleStartingPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Search <paramref name="inputSpan"/> starting from base.runtextpos for the next location a match could possibly start.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if a possible match was found; false if no more matches are possible.</returns>
+        </member>
+        <member name="M:System.Text.RegularExpressions.Generated.EmailPattern_1.RunnerFactory.Runner.TryMatchAtCurrentPosition(System.ReadOnlySpan{System.Char})">
+            <summary>Determine whether <paramref name="inputSpan"/> at base.runtextpos is a match for the regular expression.</summary>
+            <param name="inputSpan">The text being scanned by the regular expression.</param>
+            <returns>true if the regular expression matches at the current position; otherwise, false.</returns>
+        </member>
+        <member name="T:System.Text.RegularExpressions.Generated.Utilities">
+            <summary>Helper methods used by generated <see cref="T:System.Text.RegularExpressions.Regex"/>-derived implementations.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_defaultTimeout">
+            <summary>Default timeout value set in <see cref="T:System.AppContext"/>, or <see cref="F:System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"/> if none was set.</summary>
+        </member>
+        <member name="F:System.Text.RegularExpressions.Generated.Utilities.s_hasTimeout">
+            <summary>Whether <see cref="F:System.Text.RegularExpressions.Generated.Utilities.s_defaultTimeout"/> is non-infinite.</summary>
+        </member>
+    </members>
+</doc>

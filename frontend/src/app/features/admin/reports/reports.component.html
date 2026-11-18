@@ -1,0 +1,184 @@
+<div class="max-w-6xl flex flex-col gap-5">
+  <div class="print:hidden">
+    <h1 class="text-xl font-semibold text-gray-900">Reports</h1>
+    <p class="mt-1 text-sm text-gray-600">For audits and accreditation reviews: choose a report and a period, read it here or print it, and download every row as a spreadsheet.</p>
+  </div>
+
+  <!-- Choose -->
+  <section class="print:hidden grid gap-3 sm:grid-cols-3" aria-label="Report">
+    @for (k of kinds; track k.id) {
+      <button type="button" (click)="chooseKind(k.id)" [attr.aria-pressed]="kind() === k.id"
+        class="text-left bg-white border rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50"
+        [class.border-[#7a2331]]="kind() === k.id" [class.ring-1]="kind() === k.id" [class.ring-[#7a2331]]="kind() === k.id" [class.border-gray-200]="kind() !== k.id">
+        <div class="text-sm font-semibold text-gray-900">{{ k.title }}</div>
+        <div class="mt-0.5 text-xs text-gray-600">{{ k.description }}</div>
+      </button>
+    }
+  </section>
+
+  <form class="print:hidden flex flex-wrap items-center gap-2 text-sm" (ngSubmit)="run()">
+    <select name="preset" aria-label="Period" [(ngModel)]="preset" class="border border-gray-200 bg-white rounded-lg px-2.5 py-1.5 text-gray-700 cursor-pointer">
+      @for (p of periodOptions; track p) {
+        <option [value]="p">{{ periodLabels[p] }}</option>
+      }
+    </select>
+    @if (preset === 'custom') {
+      <input type="date" name="from" aria-label="From" [(ngModel)]="fromDate" [max]="toDate || null" class="border border-gray-200 rounded-lg px-2 py-1" />
+      <span class="text-gray-400">to</span>
+      <input type="date" name="to" aria-label="To" [(ngModel)]="toDate" [min]="fromDate || null" class="border border-gray-200 rounded-lg px-2 py-1" />
+    }
+    <button type="submit" [disabled]="loading() || !periodReady()"
+      class="px-4 py-1.5 rounded-lg bg-[#0f172a] text-white font-medium hover:bg-gray-800 disabled:opacity-40 cursor-pointer">
+      {{ loading() ? 'Producing…' : 'Show report' }}
+    </button>
+    <button type="button" (click)="downloadCsv()" [disabled]="exporting() || !periodReady()"
+      class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 cursor-pointer">
+      {{ exporting() ? 'Downloading…' : 'Download CSV (all rows)' }}
+    </button>
+    @if (shownKind()) {
+      <button type="button" (click)="print()" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer">Print</button>
+    }
+  </form>
+
+  @if (error()) {
+    <p class="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2" role="alert">{{ error() }}</p>
+  }
+
+  @if (shownKind(); as shown) {
+    <article class="bg-white border border-gray-200 rounded-xl p-5 print:border-0 print:p-0" aria-labelledby="report-title">
+      <header class="border-b border-gray-100 pb-3">
+        <h2 id="report-title" class="text-lg font-semibold text-gray-900">{{ kindTitle(shown) }} report</h2>
+        <p class="text-sm text-gray-600">{{ shownPeriod() }} · {{ institution() }} · produced {{ generatedAt() | date: 'd MMM y, HH:mm' }}</p>
+      </header>
+
+      <!-- Issuance -->
+      @if (shown === 'issuance' && issuance(); as r) {
+        <p class="mt-4 text-sm text-gray-800"><span class="text-2xl font-semibold text-gray-900">{{ r.total | number }}</span> certificates issued in this period.</p>
+        @if (r.total > 0) {
+          <div class="mt-4 grid gap-5 md:grid-cols-2">
+            @for (group of [
+              { title: 'By achievement', rows: r.byAchievement },
+              { title: 'By source', rows: r.bySource },
+              { title: 'Requested by', rows: r.byRequester },
+              { title: 'Approved by', rows: r.byApprover }
+            ]; track group.title) {
+              <table class="w-full text-sm">
+                <caption class="text-left text-xs font-medium text-gray-500 pb-1">{{ group.title }}</caption>
+                <tbody class="divide-y divide-gray-100">
+                  @for (row of group.rows; track row.name) {
+                    <tr><td class="py-1 text-gray-800">{{ row.name }}</td><td class="py-1 text-right tabular-nums text-gray-900">{{ row.count | number }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+          <h3 class="mt-6 text-xs font-medium text-gray-500">Certificates{{ r.total > r.rows.length ? ' (first ' + r.rows.length + '; the CSV has all ' + r.total + ')' : '' }}</h3>
+          <div class="mt-1 overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-left text-xs text-gray-500 border-b border-gray-200">
+                <tr><th class="py-1.5 pr-3">Issued</th><th class="py-1.5 pr-3">Recipient</th><th class="py-1.5 pr-3">Achievement</th><th class="py-1.5 pr-3">Code</th><th class="py-1.5 pr-3">Status now</th><th class="py-1.5 pr-3">Requested by</th><th class="py-1.5">Approved by</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (row of r.rows; track row.verificationCode) {
+                  <tr>
+                    <td class="py-1.5 pr-3 whitespace-nowrap">{{ row.issuedAt | date: 'd MMM y' }}</td>
+                    <td class="py-1.5 pr-3">{{ row.recipientName }}</td>
+                    <td class="py-1.5 pr-3">{{ row.achievementTitle }}</td>
+                    <td class="py-1.5 pr-3 font-mono text-xs whitespace-nowrap">{{ row.verificationCode }}</td>
+                    <td class="py-1.5 pr-3">{{ row.status }}</td>
+                    <td class="py-1.5 pr-3">{{ row.requestedBy }}{{ row.source === 'Partner API' ? ' (API)' : '' }}</td>
+                    <td class="py-1.5">{{ row.approvedBy ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+
+      <!-- Status changes -->
+      @if (shown === 'status-changes' && statusChanges(); as r) {
+        <div class="mt-4 flex flex-wrap gap-2">
+          @for (c of r.byChange; track c.name) {
+            <span class="px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-800">{{ c.name }}: <span class="font-semibold">{{ c.count }}</span></span>
+          }
+        </div>
+        @if (r.total === 0) {
+          <p class="mt-4 text-sm text-gray-600">No certificates were suspended, reactivated or revoked in this period.</p>
+        } @else {
+          <h3 class="mt-5 text-xs font-medium text-gray-500">Changes, oldest first{{ r.total > r.rows.length ? ' (first ' + r.rows.length + '; the CSV has all ' + r.total + ')' : '' }}</h3>
+          <div class="mt-1 overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-left text-xs text-gray-500 border-b border-gray-200">
+                <tr><th class="py-1.5 pr-3">When</th><th class="py-1.5 pr-3">Change</th><th class="py-1.5 pr-3">Certificate</th><th class="py-1.5 pr-3">By</th><th class="py-1.5 pr-3">Asked by</th><th class="py-1.5">Reason / note</th></tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (row of r.rows; track $index) {
+                  <tr class="align-top">
+                    <td class="py-1.5 pr-3 whitespace-nowrap">{{ row.occurredAt | date: 'd MMM y, HH:mm' }}</td>
+                    <td class="py-1.5 pr-3 whitespace-nowrap" [class.text-red-800]="row.change === 'Revoked'" [class.font-medium]="row.change === 'Revoked'">{{ row.change }}</td>
+                    <td class="py-1.5 pr-3">{{ row.recipientName }}<div class="text-xs text-gray-500">{{ row.achievementTitle }} · <span class="font-mono">{{ row.verificationCode }}</span></div></td>
+                    <td class="py-1.5 pr-3">{{ row.by }}</td>
+                    <td class="py-1.5 pr-3">{{ row.requestedBy ?? '' }}</td>
+                    <td class="py-1.5 text-gray-700">{{ row.reason ?? '' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+
+      <!-- Staff activity -->
+      @if (shown === 'staff-activity' && staffActivity(); as r) {
+        @let violations = r.decisionViolations.length + r.revocationViolations.length;
+        <div class="mt-4 border rounded-lg px-4 py-3 text-sm"
+          [class.bg-green-50]="violations === 0" [class.border-green-200]="violations === 0" [class.text-green-900]="violations === 0"
+          [class.bg-red-50]="violations > 0" [class.border-red-200]="violations > 0" [class.text-red-900]="violations > 0">
+          <p class="font-semibold">
+            @if (violations === 0) { ✓ Two-person approval was followed throughout } @else { ✗ {{ violations }} record(s) show the same person on both sides }
+          </p>
+          <p class="mt-0.5">
+            {{ r.decisionsChecked }} certificate {{ r.decisionsChecked === 1 ? 'decision' : 'decisions' }} (approve or reject) and
+            {{ r.revocationsChecked }} {{ r.revocationsChecked === 1 ? 'revocation' : 'revocations' }} checked: each was decided by someone other than the person who asked.
+          </p>
+          @for (v of r.decisionViolations.concat(r.revocationViolations); track v.credentialId + v.problem) {
+            <p class="mt-1">
+              <a [routerLink]="'/admin/certificates'" [queryParams]="{ open: v.credentialId }" class="underline">{{ v.recipientName }}</a>: {{ v.problem }} ({{ v.person }})
+            </p>
+          }
+        </div>
+
+        @if (r.people.length === 0) {
+          <p class="mt-4 text-sm text-gray-600">No activity in this period.</p>
+        } @else {
+          <div class="mt-5 overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-left text-xs text-gray-500 border-b border-gray-200">
+                <tr>
+                  <th class="py-1.5 pr-3">Person</th>
+                  @for (col of activityColumns; track col.type) { <th class="py-1.5 px-2 text-right">{{ col.label }}</th> }
+                  <th class="py-1.5 pl-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (p of r.people; track p.name) {
+                  <tr>
+                    <td class="py-1.5 pr-3">{{ p.name }}@if (p.isPartnerApi) { <span class="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Partner API</span> }</td>
+                    @for (col of activityColumns; track col.type) {
+                      <td class="py-1.5 px-2 text-right tabular-nums" [class.text-gray-300]="!p.counts[col.type]">{{ p.counts[col.type] || 0 }}</td>
+                    }
+                    <td class="py-1.5 pl-2 text-right tabular-nums font-medium">{{ personTotal(p.counts) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-2 text-xs text-gray-500">From the certificates' tamper-evident audit trail. The CSV lists every action with its time and certificate.</p>
+        }
+      }
+    </article>
+  } @else if (!loading()) {
+    <p class="print:hidden text-sm text-gray-500">Choose a period and press “Show report”.</p>
+  }
+</div>

@@ -1,0 +1,28 @@
+/* Help pages: the developer guide's look (developers.component.css) plus
+   the start page, search and screenshots. */
+.help-crumb { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.help-search { position: relative; max-width: 560px; margin-top: 14px; }
+.help-search svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: #6b7a99; }
+.help-search input { width: 100%; padding: 11px 14px 11px 40px; border-radius: 10px; border: 1px solid #33456b; background: #0f1a2e; color: #fff; font-size: 15px; }
+.help-search input::placeholder { color: #8a97b3; }
+.help-search input:focus { outline: 2px solid #e8a765; outline-offset: 1px; }
+
+.help-results { max-width: 1120px; margin: 0 auto; padding: 20px 20px 0; }
+.help-results-count { margin: 0 0 8px; font-size: 13px; color: var(--dv-muted); }
+.help-results ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.help-results button { width: 100%; text-align: left; display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--dv-line); border-radius: 10px; background: var(--dv-surface); cursor: pointer; }
+.help-results button:hover, .help-results button:focus-visible { border-color: var(--dv-accent); outline: none; }
+.help-hit-guide { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dv-gold); font-weight: 600; }
+.help-hit-title { font-weight: 600; color: var(--dv-navy); }
+.help-hit-snippet { font-size: 13.5px; color: var(--dv-muted); }
+
+.help-index { max-width: 1120px; margin: 0 auto; padding: 32px 20px 56px; }
+.help-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.help-card { height: 100%; display: grid; align-content: start; gap: 6px; padding: 20px; border: 1px solid var(--dv-line); border-radius: 12px; background: var(--dv-surface); text-decoration: none; color: var(--dv-fg); }
+.help-card:hover, .help-card:focus-visible { border-color: var(--dv-accent); outline: none; box-shadow: 0 10px 28px -20px rgba(21, 34, 59, 0.5); }
+.help-card-audience { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dv-gold); font-weight: 600; }
+.help-card-title { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: var(--dv-navy); }
+.help-card-summary { font-size: 14px; color: var(--dv-muted); }
+.help-error { max-width: 1120px; margin: 24px auto; padding: 0 20px; color: #b42318; }
+.dev-foot a { color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

@@ -1,0 +1,15 @@
+<div #trigger class="inline-block" (click)="toggle()">
+  <ng-content select="[trigger]"></ng-content>
+</div>
+
+@if (open()) {
+  <div class="fixed inset-0 z-40" (click)="close()"></div>
+  <div
+    class="fixed w-56 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+    [style.top.px]="menuTop()"
+    [style.right.px]="menuRight()"
+    (click)="close()"
+  >
+    <ng-content select="[menu]"></ng-content>
+  </div>
+}

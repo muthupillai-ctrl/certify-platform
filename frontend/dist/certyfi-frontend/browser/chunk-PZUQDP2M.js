@@ -1,0 +1,1 @@
+import{S as r,ra as e}from"./chunk-GFTQWQX2.js";var f=(()=>{class t{query=e("");static \u0275fac=function(o){return new(o||t)};static \u0275prov=r({token:t,factory:t.\u0275fac,providedIn:"root"})}return t})();export{f as a};

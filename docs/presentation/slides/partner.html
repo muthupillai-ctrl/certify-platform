@@ -1,0 +1,26 @@
+<section id="partner" data-transition="fade" style="background:#15223B; color:#F7F5F0; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:40px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#E8A765">Partner API</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1; color:#F7F5F0">Other systems can issue certificates automatically</h2>
+<p style="font-size:30px; line-height:1.45; color:#C9D3E3; width:1500px">For example, LMSpromise the moment a learner completes a course.</p>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">One key per system</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Admins create and revoke keys with chosen permissions. Each key sees only its own certificates.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Approval stays in control</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">An approver reviews each one unless an admin trusts the system. Revoking always needs a person.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Students handled for you</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Send a student ID: Certyfi creates the student, emails them, and can take payment first.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:14px; background:#1F3052; padding:40px; border-radius:16px">
+<h3 style="font-size:32px; font-weight:600; line-height:1.2; color:#F7F5F0">Instant updates</h3>
+<p style="font-size:26px; line-height:1.45; color:#C9D3E3">Certyfi tells the system the moment a certificate is paid, issued or revoked, signed and retried.</p>
+</div>
+</div>
+<aside>Montessori360 could do the same at the end of a school year. Published interactive documentation is at certyfi.ahamsys.com/api/v1/docs, and each system is rate-limited separately. A repeated request returns the same certificate instead of issuing a duplicate, so systems can retry safely. Because revoking is permanent, a connected system can only ask for a revocation; staff approve it on the Revoke &amp; suspend page. A system can also cancel a request it made before it's issued. The instant updates are signed webhooks, retried for about a day if the system is down; staff see each delivery on the API keys page. Each system can also show its users what a template looks like through a short-lived preview link.</aside>
+</section>

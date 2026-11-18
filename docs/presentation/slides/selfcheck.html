@@ -1,0 +1,30 @@
+<section id="selfcheck" data-transition="fade" style="background:#F7F5F0; color:#15223B; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+<div style="display:flex; flex-direction:column; gap:16px">
+<p style="font-size:28px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#1D5FD1">Standard tools</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:72px; font-weight:600; line-height:1.1">Check a signature yourself</h2>
+</div>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px">
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#1D5FD1">1</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Copy three things</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">From the certificate's verification page: the public key, the signature and the fingerprint.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#1D5FD1">2</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Run OpenSSL</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">Free, and included with macOS and Linux. No Certyfi software is involved.</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:32px; border:1px solid #DCE2EA; border-radius:16px">
+<p style="font-size:44px; font-weight:600; line-height:1.2; color:#D97A2B">3</p>
+<h3 style="font-size:30px; font-weight:600; line-height:1.2">Read the answer</h3>
+<p style="font-size:26px; line-height:1.4; color:#4A5568">"Verified OK" means genuine. Change one character and the check fails.</p>
+</div>
+</div>
+<div style="display:flex; flex-direction:column; gap:10px; background:#15223B; padding:32px 40px; border-radius:16px; font-family:monospace">
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> printf '%s' '5ca3a66a…f1ab16da' &gt; fingerprint.txt</p>
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> openssl base64 -d -A -in signature.txt -out signature.der</p>
+<p style="font-size:26px; line-height:1.5; color:#C9D3E3"><span style="color:#9FB0C9">$</span> openssl dgst -sha256 -verify key.pem -signature signature.der fingerprint.txt</p>
+<p style="font-size:26px; line-height:1.5; color:#7FD49B"><b>Verified OK</b></p>
+</div>
+<aside>This is the "checkable with standard tools" promise in practice. On a certificate's verification page, the signature panel shows the fingerprint (what was signed), the signature and, under "Show public key", the institution's public key. Save the key as key.pem and the signature as signature.txt; the first command saves the fingerprint exactly (no line break at the end), the second turns the signature from text into the binary form OpenSSL reads, and the third checks it. We ran exactly these commands on a real certificate: "Verified OK"; with one character of the fingerprint changed, OpenSSL reported "Error Verifying Data". On Windows, OpenSSL comes with Git for Windows. Other ways to run the same check: the "Verify in this browser" button on the verification page uses the browser's own built-in cryptography; each institution's public keys are also published in the standard key-list format (JWKS) at /api/v1/verify/&lt;institution&gt;/jwks; and the downloadable digital credential is a standard signed JWT that any JWT library can check against those keys. Note: the fingerprint covers the certificate's key details, including the recipient's email, which is not shown publicly, so this check proves the institution's key signed that record and that it hasn't changed since.</aside>
+</section>

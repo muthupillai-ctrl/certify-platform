@@ -1,0 +1,49 @@
+<div class="dev-page">
+  <header class="dev-top">
+    <div class="dev-top-inner">
+      <a routerLink="/" class="dev-brand" aria-label="Certyfi home">
+        <span class="dev-mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#dcae4a" stroke-width="1.6" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </span>
+        Certyfi
+      </a>
+      <p class="dev-eyebrow">For developers</p>
+      <h1>Certyfi Partner API</h1>
+      <p class="dev-lede">Connect your learning platform, student information system or HR platform to Certyfi and issue verifiable certificates automatically.</p>
+      <dl class="dev-facts">
+        <div><dt>Base URL</dt><dd><code>{{ origin }}/api/v1/partner</code></dd></div>
+        <div><dt>Interactive reference</dt><dd><a [href]="origin + '/api/v1/docs/'" target="_blank" rel="noopener">{{ origin.replace('https://', '') }}/api/v1/docs ↗</a></dd></div>
+        @if (environmentLabel()) {
+          <div><dt>System</dt><dd class="dev-env">{{ environmentLabel() }}: for trying the API, nothing here is real</dd></div>
+        }
+      </dl>
+    </div>
+  </header>
+
+  <div class="dev-body">
+    @if (toc().length) {
+      <nav class="dev-toc" aria-label="Contents">
+        <p>Contents</p>
+        @for (t of toc(); track t.id) {
+          <a [href]="'#' + t.id" (click)="scrollTo(t.id, $event)" [class]="t.level === 3 ? 'dev-toc-sub' : ''">{{ t.text }}</a>
+        }
+      </nav>
+    }
+    <main class="dev-doc" (click)="onClick($event)" (keydown)="onKeydown($event)">
+      @if (error()) {
+        <p role="alert">The guide couldn't be loaded. Reload the page to try again.</p>
+      } @else if (html()) {
+        <div [innerHTML]="html()"></div>
+      } @else {
+        <p class="dev-loading">Loading the guide…</p>
+      }
+    </main>
+  </div>
+
+  <footer class="dev-foot">
+    <span>Certyfi by Ahamsys</span>
+    <span>Keys and access come from the institution you issue for: ask its Certyfi admin.</span>
+  </footer>
+</div>

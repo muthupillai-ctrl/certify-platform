@@ -1,0 +1,59 @@
+Gaps in the student and LMS flow (worth fixing before real students)
+
+1. Revoked or suspended certificates don't notify the student (confirmed). This is the same problem the LMS found with rejections, one step later. If an issued LMS certificate is revoked or suspended, the student isn't emailed, though their portal shows it.
+
+2. Unpaid certificates stay open forever. 
+If a student never pays, the certificate sits as 
+"Awaiting payment" indefinitely. 
+There's no reminder email and no automatic 
+cancel after a set number of days.
+
+3. There's no way to change a student's email or name. 
+If the LMS sends the same studentId with a new email, 
+Certyfi refuses it with 409, and staff can't 
+edit a student either. 
+Students change emails, so this will come up.
+
+4. The LMS has to keep checking. It learns about "paid", 
+"approved" and "rejected" by polling. Webhooks, where 
+Certyfi calls the LMS when a status changes, would 
+make it immediate and cut the traffic.
+
+5. There's no way to invite all existing students at 
+once. Students created from older certificates have to 
+be emailed one at a time from the Students page. 
+A "Email set-up links to everyone not signed up" button 
+would fix that.
+
+Gaps for staff
+
+6. Reports and the dashboard don't know about the new 
+steps (confirmed).
+  The staff-activity report has no "Paid" or "Cancelled"
+   columns.
+   The dashboard doesn't count certificates 
+   awaiting payment.
+
+7. There's no email history for a student. Staff can't 
+see what was sent or whether it failed. Also, Certyfi 
+records an email as "sent" once Resend accepts it, 
+not when it reaches the inbox, so bounces aren't tracked.
+
+
+Housekeeping
+
+8. Your local setup still needs two steps:
+  Restart the local API.
+  Run migrate-schemas under Platform login, since the 
+  cancel feature added a database change.
+
+9. Production still holds only the test institution's 
+data. Clear it before the first real pilot.
+
+10. The Resend key was pasted in chat. 
+Swap in a new one when convenient.
+
+11. The presentation doesn't mention any of this. 
+The student portal, emails and LMS flow aren't in the 
+deck.
+
